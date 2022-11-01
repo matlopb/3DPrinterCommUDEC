@@ -1,0 +1,8 @@
+{
+	"name": "PluginUDEC",
+	"author": "Matías Nicolás López Barriga",
+        "version": "1.0.1",
+	"api": 5,
+	"description": "Herramienta para transformar g-code a archivos de extension .l5k",
+	"supported_sdk_versions": ["5.0.0", "6.0.0", "7.0.0"]
+}
