@@ -176,6 +176,46 @@ Window {
         }
     }
 
+    Window{
+        id: double_confirmation_window
+
+        x: Screen.width / 2 - width / 2
+        y: Screen.height / 2 - height / 2
+        width: 350
+        height: 200
+        title: 'Detener impresión'
+        visible: false
+
+        Text {
+            id: message
+            anchors.bottom: buttons_row.top
+            anchors.bottomMargin: 20
+            anchors.horizontalCenter: buttons_row.horizontalCenter
+            text: qsTr("¿Está seguro que desea detener la impresión? \n Se perderá todo el progreso hasta ahora")
+        }
+
+        RowLayout{
+            id: buttons_row
+            anchors.centerIn: parent
+            Button{
+                id: accept
+
+                Layout.preferredWidth: 100
+                Layout.preferredHeight: 30
+                text: 'Detener'
+                onClicked: {manager.what_do('Detener'); double_confirmation_window.visible = false}
+            }
+            Button{
+                id: decline
+
+                Layout.preferredWidth: 100
+                Layout.preferredHeight: 30
+                text: 'Cancelar'
+                onClicked: {manager.what_do('Cancelar'); double_confirmation_window.visible = false}
+            }
+        }
+    }
+
     TabView {
         id: frame
 
@@ -347,7 +387,7 @@ Window {
 
                             width: 140
                             placeholderText: qsTr("e.g. 192.168.1.34/2");
-                            text: qsTr("192.168.1.26/2");
+                            text: qsTr("152.74.22.162/3");
                             validator: RegExpValidator{ regExp: /^(([01]?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))\.){3}([01]?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))\/(([0-6]|3([0])|2([0-9]))\.)$/}
                         }
                     }
@@ -782,7 +822,7 @@ Window {
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.top: progress_text.bottom
                         anchors.topMargin: 20
-                        text: qsTr("0/?")
+                        text: qsTr("Instrucciones completadas: 0/?")
                         font.bold: true
                         font.pointSize: 14
                         horizontalAlignment: Text.AlignHCenter
@@ -1173,15 +1213,18 @@ Window {
                                 font.bold: true
                                 font.pointSize: 14
                             }
+                            onClicked: {
+                                double_confirmation_window.visible = true
+                            }
                         }
-                        ParamArea{id: max_speed; name: "Velocidad max.\ndel efector"; placeholder: qsTr("Dimension en m/s"); Layout.alignment: Qt.AlignRight}
+                        ParamArea{id: max_speed; name: "Veloc. de efector"; placeholder: qsTr("Dimension en m/s"); Layout.alignment: Qt.AlignRight; input.onAccepted: {manager.write_value("jerk_speed", max_speed.paramText)}}
                         ParamArea{id: kff_a; name: "Posicion"; placeholder: qsTr("ingrese un valor"); help: "Ganancia de pre-alimentación de acceleración"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {console.log("Posicion accepted")/*; manager.write_value("Posicion_2", paramText)*/}}
                         ParamArea{id: kff_v; name: "Velocidad"; placeholder: qsTr("ingrese un valor"); help: "Ganancia de pre-alimentación de velocidad"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {console.log("Velocidad accepted")/*; manager.write_value("Velocidad_2", paramText)*/}}
                         ParamArea{id: kp_p; name: "Aceleracion"; placeholder: qsTr("ingrese un valor"); help: "Ganancia proporcional de acceleración"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {console.log("Aceleracion accepted")/*; manager.write_value("Aceleracion_2", paramText)*/}}
                         ParamArea{id: ki_p; name: "Desaceleracion"; placeholder: qsTr("ingrese un valor"); help: "Ganancia integral de acceleración"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {console.log("Desaceleracion accepted")/*; manager.write_value("Desaceleracion_2", paramText)*/}}
                         ParamArea{id: kp_v; name: "Arranque_acel"; placeholder: qsTr("ingrese un valor"); help: "Ganancia proporcional de velocidad"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {console.log("Arranque aceleracion accepted")/*; manager.write_value("Arranque_acel_2", paramText)*/}}
                         ParamArea{id: ki_v; name: "Arranque_desc"; placeholder: qsTr("ingrese un valor"); help: "Ganancia integral de velocidad"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {console.log("Arranque desaceleracion accepted")/*; manager.write_value("Arranque_desac_2", paramText)*/}}
-                        ComboBox{
+                        /*ComboBox{
                             id: material_selector
                             Layout.preferredWidth: 250
                             Layout.preferredHeight: 30
@@ -1193,7 +1236,7 @@ Window {
                                     manager.select_material(material_selector.currentText)
                                 }
                             }
-                        }
+                        }*/
                     }
                 }
             }
