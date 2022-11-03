@@ -73,6 +73,7 @@ class PluginUDEC(QObject, Extension):
         self.tag_dict = {}
         self.ip = ""
         self.loading_is_open = False
+        self.plc = LogixDriver('152.74.22.162/3', init__program_tags=False)
 
 
 
@@ -199,11 +200,13 @@ class PluginUDEC(QObject, Extension):
 
         try:
             tag_names = self.extract_names(tag_list)
-            plc = LogixDriver(ip)
+            #self.plc = LogixDriver(152.74.22.162/2, init__program_tags=False)
             n_tags = len(tag_names)
-            plc.open()
-            tag_read = plc.read(*tag_names)
-            plc.close()
+            print(self.plc.connected)
+            if not self.plc.connected:
+                self.plc.open()
+            tag_read = self.plc.read(*tag_names)
+            #plc.close()
             values = self.extract_values(tag_read, n_tags)
             self.saved_values = values
             if self.loading_is_open:
@@ -236,13 +239,20 @@ class PluginUDEC(QObject, Extension):
     @pyqtSlot(str, result=list)
     def plc_info(self, ip) -> List[str]:
         try:
-            with LogixDriver(ip, init__program_tags=True) as plc:
-                is_connected = plc.connected
-                product_name = plc.info["product_name"]
-                name = plc.info["name"]
-                programs = ""
-                for program in list(plc.info["programs"].keys()):
-                    programs += str(program)
+            #with LogixDriver(ip, init__program_tags=True) as plc:
+            print(self.plc.connected)
+            if not self.plc.connected:
+                self.plc.open()
+            is_connected = self.plc.connected
+            print(is_connected)
+            product_name = self.plc.info["product_name"]
+            print(product_name)
+            name = self.plc.info["name"]
+            print(name)
+            programs = ""
+            for program in list(self.plc.info["programs"].keys()):
+                programs += str(program)
+            print(program)
             return [product_name, name, programs, is_connected]
         except:
             self.set_message_params('e', 'Se produjo un error',
@@ -255,21 +265,31 @@ class PluginUDEC(QObject, Extension):
     @pyqtSlot()
     def send_instructions(self):
         n_instructions = len(self.positions_list)
-        with LogixDriver(self.ip) as plc:
-            plc.write('Program:MainProgram.matrix_tag{'+str(n_instructions)+'}',
+        # with LogixDriver(self.ip) as plc:
+        if not self.plc.connected:
+            self.plc.open()
+        is_printing = self.plc.read('Program:MainProgram.sw_beginapp').value
+        if self.plc.connected and not is_printing:
+            self.plc.write('Program:MainProgram.Matriz_L{'+str(n_instructions)+'}',
                       self.positions_list)
-        self.set_message_params('i', 'Operacion finalizada',
-                                'Las instrucciones fueron enviadas a la '
-                                'impresora. Puede monitorear el proceso en '
-                                'las pantallas adyacentes.')
+            self.set_message_params('i', 'Operacion finalizada',
+                                    'Las instrucciones fueron enviadas a la '
+                                    'impresora. Puede monitorear el proceso en '
+                                    'las pantallas adyacentes.')
+        else:
+            self.set_message_params('r', 'Operacion cancelada',
+                                    'Las immpresora se encuentra trabajando. '
+                                    'Para enviar nuevas instrucciones detenga '
+                                    'la impresion en la pestaña "Control" o '
+                                    'espere a que finalice.')
         self.progress_end.emit()
 
     @pyqtSlot(float, float, float, float, float, float)
     def generate_instructions_list(self, sb, sp, arm_length, height, ws_radio, ws_height):
-        """Responsible for using the given parameters to call the functions which calculate the instructions and
-        then write them in a L5K file."""
+        """Responsible for using the given parameters to call the functions which calculate the instructions."""
 
         params = [sb, sp, arm_length, height, ws_radio, ws_height]
+        self.params = params
         if not self.are_valid(params):
             Logger.log("e", "Some parameters ")
             self.progress_end.emit()
@@ -278,7 +298,6 @@ class PluginUDEC(QObject, Extension):
         self.total_coordinates = len(coordinates)
         if self.fits_in_ws(ws_radio, ws_height, coordinates):
             ws_coordinates = self.z_bias(coordinates, float(height))
-            # parameters = [sb, sp, wb, wp, ub, up, arm_length]
             try:
                 self.inv_kin_problem(ws_coordinates, params)
                 self.positions_list = self.flatten(self.positions_list)
@@ -321,7 +340,7 @@ class PluginUDEC(QObject, Extension):
                 tag_element = self.tag_dict[tag][0]
                 tag_names.append('Program:MainProgram.' + tag_name + "["+str(tag_element)+"]")
 
-    def extract_tag_name(self, tag) ->str:
+    def extract_tag_name(self, tag) -> str:
         tag_name = tag.split('[')[0]
         tag_dim = self.tag_dict[tag][1]
         tag_n_dim = self.tag_dict[tag][2]
@@ -343,12 +362,12 @@ class PluginUDEC(QObject, Extension):
     @pyqtSlot(result=list)
     def get_progress_percentage(self):
         try:
-            with LogixDriver(self.ip, init__program_tags=True) as plc:
-                step = plc.read('Program:MainProgram.n').value
-                self.prev_step = step
-                if self.loading_is_open:
-                    self.connection_achieved.emit()
-                    self.loading_is_open = False
+            # with LogixDriver(self.ip, init__program_tags=False) as plc:
+            step = self.plc.read('i').value
+            self.prev_step = step
+            if self.loading_is_open:
+                self.connection_achieved.emit()
+                self.loading_is_open = False
         except:
             if not self.loading_is_open:
                 self.set_message_params('r', 'Se produjo un error',
@@ -390,21 +409,32 @@ class PluginUDEC(QObject, Extension):
     @pyqtSlot(result=list)
     def get_actual_position(self):
         tags = ['Actuador_B1.ActualPosition', 'Actuador_B2.ActualPosition', 'Actuador_B3.ActualPosition']
-        with LogixDriver(self.ip, init__program_tags=True) as plc:
+        with LogixDriver(self.ip, init__program_tags=False) as plc:
             position_info = plc.read(*tags)
         positions = self.extract_values(position_info, 3)
         return positions
 
     @pyqtSlot(float, float, float)
     def move_to(self, x_pos, y_pos, z_pos):
-        with LogixDriver(self.ip, init__program_tags=False) as plc:
-            plc.write('Program:MainProgram.coor_move_array{3}', [x_pos, y_pos, z_pos])
-            plc.write('Program:MainProgram.sw_coor_move', 1)
+        print(x_pos, y_pos, z_pos)
+        servo_pos = self.inv_kin_problem([[x_pos, y_pos, z_pos - self.params[3], 6000]], self.params)
+        print(servo_pos)
+        # with LogixDriver(self.ip, init__program_tags=False) as plc:
+        is_printing = self.plc.read('Program:MainProgram.sw_beginapp').value
+        if self.plc.connected and not is_printing:
+            self.plc.write('Program:MainProgram.coor_move_array{3}', self.flatten(servo_pos)) # coor_move_array{3}
+            self.plc.write('Program:MainProgram.sw_coor_move', 1)
 
     @pyqtSlot()
     def run_home(self):
         with LogixDriver(self.ip, init__program_tags=False) as plc:
             plc.write('sw_startposition', 1)
+
+    @pyqtSlot()
+    def stop_printing(self):
+        if not self.plc.connected:
+            self.plc.open()
+        self.plc.write('Program:MainProgram.sw_stop_printing', 1)
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -516,7 +546,7 @@ class PluginUDEC(QObject, Extension):
             coordinates[i][2] -= height
         return coordinates
 
-    def inv_kin_problem(self, coordinates, parameters) -> None:
+    def inv_kin_problem(self, coordinates, parameters):
         """Returns the positions of the motors for each given coordinate"""
 
         self.positions_list.clear()
@@ -614,7 +644,7 @@ class PluginUDEC(QObject, Extension):
 
     def get_coordinates(self, gcode) -> List[List[float]]:
         """Gets the XYZ coordinates and feed rate speed from the G code and
-        stores them in a list."""
+        stores them in a list of lists."""
 
         filtered_lines = list(filter(self.match_inline([' X', ' Y', ' Z']), gcode))
         coordinates = []
