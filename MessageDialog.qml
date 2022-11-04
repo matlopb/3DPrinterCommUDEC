@@ -100,7 +100,7 @@ Window {
             anchors.topMargin: 20
             width: parent.width - 40
             wrapMode: Text.Wrap
-            text: qsTr(manager.get_message_content())
+            text: manager.get_message_content()
         }
 
         AnimatedImage{
