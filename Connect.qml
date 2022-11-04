@@ -182,36 +182,52 @@ Window {
         x: Screen.width / 2 - width / 2
         y: Screen.height / 2 - height / 2
         width: 350
-        height: 200
+        height: 150
         title: 'Detener impresión'
         visible: false
 
-        Text {
-            id: message
-            anchors.bottom: buttons_row.top
-            anchors.bottomMargin: 20
-            anchors.horizontalCenter: buttons_row.horizontalCenter
-            text: qsTr("¿Está seguro que desea detener la impresión? \n Se perderá todo el progreso hasta ahora")
-        }
-
-        RowLayout{
-            id: buttons_row
-            anchors.centerIn: parent
-            Button{
-                id: accept
-
-                Layout.preferredWidth: 100
-                Layout.preferredHeight: 30
-                text: 'Detener'
-                onClicked: {manager.what_do('Detener'); double_confirmation_window.visible = false}
+        Rectangle{
+            anchors.fill: parent
+            Image {
+                id: message_image
+                source: "./images/warning.png"
+                fillMode: Image.PreserveAspectFit;
+                width: 50
+                height: 50
+                anchors.horizontalCenter: message.horizontalCenter
+                anchors.bottom: message.top
+                anchors.topMargin: 20
             }
-            Button{
-                id: decline
 
-                Layout.preferredWidth: 100
-                Layout.preferredHeight: 30
-                text: 'Cancelar'
-                onClicked: {manager.what_do('Cancelar'); double_confirmation_window.visible = false}
+            Text {
+                id: message
+                anchors.bottom: buttons_row.top
+                anchors.bottomMargin: 20
+                anchors.horizontalCenter: buttons_row.horizontalCenter
+                text: qsTr("¿Está seguro que desea detener la impresión? \n Se perderá todo el progreso hasta ahora")
+            }
+
+            RowLayout{
+                id: buttons_row
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 20
+                Button{
+                    id: accept
+
+                    Layout.preferredWidth: 100
+                    Layout.preferredHeight: 30
+                    text: 'Detener'
+                    onClicked: {manager.stop_printing(); double_confirmation_window.visible = false}
+                }
+                Button{
+                    id: decline
+
+                    Layout.preferredWidth: 100
+                    Layout.preferredHeight: 30
+                    text: 'Cancelar'
+                    onClicked: {double_confirmation_window.visible = false}
+                }
             }
         }
     }
@@ -426,6 +442,7 @@ Window {
                                 monitoring_tab.item.load_tags()
                                 monitoring_tab.item.set_progress_total()
                                 control_tab.item.get_actual_position()
+                                control_tab.item.get_gains()
                             }
                         }
                     }
@@ -857,7 +874,7 @@ Window {
                             var progress = manager.get_progress_percentage()
                             percentage_text.text = progress[0].toString() + "%"
                             process_progressBar.value = progress[0]
-                            progress_step.text = progress[1]+"/"+total_instructions
+                            progress_step.text = "Instrucciones completadas: " + progress[1]+"/"+total_instructions
                             if (progress[0] >= 100){
                                 progress_text.text = "Proceso terminado."
                                 progress_timer.running = false
@@ -981,6 +998,16 @@ Window {
                     eje_x.paramText = actual_position[0]
                     eje_y.paramText = actual_position[1]
                     eje_z.paramText = actual_position[2]
+                }
+
+                function get_gains(){
+                    var gains = manager.get_gains()
+                    kff_a.placeholder = gains[0].toString()
+                    kff_v.placeholder = gains[1].toString()
+                    kp_v.placeholder = gains[2].toString()
+                    ki_v.placeholder = gains[3].toString()
+                    kp_p.placeholder = gains[4].toString()
+                    ki_p.placeholder = gains[5].toString()
                 }
 
                 Text{
@@ -1218,12 +1245,12 @@ Window {
                             }
                         }
                         ParamArea{id: max_speed; name: "Veloc. de efector"; placeholder: qsTr("Dimension en m/s"); Layout.alignment: Qt.AlignRight; input.onAccepted: {manager.write_value("jerk_speed", max_speed.paramText)}}
-                        ParamArea{id: kff_a; name: "Posicion"; placeholder: qsTr("ingrese un valor"); help: "Ganancia de pre-alimentación de acceleración"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {console.log("Posicion accepted")/*; manager.write_value("Posicion_2", paramText)*/}}
-                        ParamArea{id: kff_v; name: "Velocidad"; placeholder: qsTr("ingrese un valor"); help: "Ganancia de pre-alimentación de velocidad"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {console.log("Velocidad accepted")/*; manager.write_value("Velocidad_2", paramText)*/}}
-                        ParamArea{id: kp_p; name: "Aceleracion"; placeholder: qsTr("ingrese un valor"); help: "Ganancia proporcional de acceleración"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {console.log("Aceleracion accepted")/*; manager.write_value("Aceleracion_2", paramText)*/}}
-                        ParamArea{id: ki_p; name: "Desaceleracion"; placeholder: qsTr("ingrese un valor"); help: "Ganancia integral de acceleración"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {console.log("Desaceleracion accepted")/*; manager.write_value("Desaceleracion_2", paramText)*/}}
-                        ParamArea{id: kp_v; name: "Arranque_acel"; placeholder: qsTr("ingrese un valor"); help: "Ganancia proporcional de velocidad"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {console.log("Arranque aceleracion accepted")/*; manager.write_value("Arranque_acel_2", paramText)*/}}
-                        ParamArea{id: ki_v; name: "Arranque_desc"; placeholder: qsTr("ingrese un valor"); help: "Ganancia integral de velocidad"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {console.log("Arranque desaceleracion accepted")/*; manager.write_value("Arranque_desac_2", paramText)*/}}
+                        ParamArea{id: kff_a; name: "Kff aceleración"; placeholder: qsTr("ingrese un valor"); help: "Ganancia de pre-alimentación de acceleración"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {manager.tune_gain("SV_accelFFgain", "sw_accelFFGain", kff_a.paramText)}}
+                        ParamArea{id: kff_v; name: "Kff velocidad"; placeholder: qsTr("ingrese un valor"); help: "Ganancia de pre-alimentación de velocidad"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {manager.tune_gain("SV_velocFFgain", "sw_velocFFGain", kff_v.paramText)}}
+                        ParamArea{id: kp_p; name: "Kp posición"; placeholder: qsTr("ingrese un valor"); help: "Ganancia proporcional de acceleración"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {manager.tune_gain("SV_posPropgain", "sw_posPropGain", kp_p.paramText)}}
+                        ParamArea{id: ki_p; name: "Ki posición"; placeholder: qsTr("ingrese un valor"); help: "Ganancia integral de acceleración"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {manager.tune_gain("SV_posItggain", "sw_posItgGain", ki_p.paramText)}}
+                        ParamArea{id: kp_v; name: "Kp velocidad"; placeholder: qsTr("ingrese un valor"); help: "Ganancia proporcional de velocidad"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {manager.tune_gain("SV_velocPropgain", "sw_velocPropGain", kp_v.paramText)}}
+                        ParamArea{id: ki_v; name: "Ki velocidad"; placeholder: qsTr("ingrese un valor"); help: "Ganancia integral de velocidad"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {manager.tune_gain("SV_velocItggain", "sw_velocItgGain", ki_v.paramText)}}
                         /*ComboBox{
                             id: material_selector
                             Layout.preferredWidth: 250
