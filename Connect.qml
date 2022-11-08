@@ -995,9 +995,9 @@ Window {
 
                 function get_actual_position(){
                     var actual_position = manager.get_actual_position()
-                    eje_x.paramText = actual_position[0]
-                    eje_y.paramText = actual_position[1]
-                    eje_z.paramText = actual_position[2]
+                    eje_x.paramText = 0//actual_position[0]
+                    eje_y.paramText = 0//actual_position[1]
+                    eje_z.paramText = 0//actual_position[2]
                 }
 
                 function get_gains(){
@@ -1244,26 +1244,20 @@ Window {
                                 double_confirmation_window.visible = true
                             }
                         }
-                        ParamArea{id: max_speed; name: "Veloc. de efector"; placeholder: qsTr("Dimension en m/s"); Layout.alignment: Qt.AlignRight; input.onAccepted: {manager.write_value("jerk_speed", max_speed.paramText)}}
-                        ParamArea{id: kff_a; name: "Kff aceleración"; placeholder: qsTr("ingrese un valor"); help: "Ganancia de pre-alimentación de acceleración"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {manager.tune_gain("SV_accelFFgain", "sw_accelFFGain", kff_a.paramText)}}
-                        ParamArea{id: kff_v; name: "Kff velocidad"; placeholder: qsTr("ingrese un valor"); help: "Ganancia de pre-alimentación de velocidad"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {manager.tune_gain("SV_velocFFgain", "sw_velocFFGain", kff_v.paramText)}}
-                        ParamArea{id: kp_p; name: "Kp posición"; placeholder: qsTr("ingrese un valor"); help: "Ganancia proporcional de acceleración"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {manager.tune_gain("SV_posPropgain", "sw_posPropGain", kp_p.paramText)}}
-                        ParamArea{id: ki_p; name: "Ki posición"; placeholder: qsTr("ingrese un valor"); help: "Ganancia integral de acceleración"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {manager.tune_gain("SV_posItggain", "sw_posItgGain", ki_p.paramText)}}
-                        ParamArea{id: kp_v; name: "Kp velocidad"; placeholder: qsTr("ingrese un valor"); help: "Ganancia proporcional de velocidad"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {manager.tune_gain("SV_velocPropgain", "sw_velocPropGain", kp_v.paramText)}}
-                        ParamArea{id: ki_v; name: "Ki velocidad"; placeholder: qsTr("ingrese un valor"); help: "Ganancia integral de velocidad"; helpSide: "left"; Layout.alignment: Qt.AlignRight; input.onAccepted: {manager.tune_gain("SV_velocItggain", "sw_velocItgGain", ki_v.paramText)}}
-                        /*ComboBox{
-                            id: material_selector
-                            Layout.preferredWidth: 250
-                            Layout.preferredHeight: 30
-                            Layout.alignment: Qt.AlignHCenter
-                            editable: true
-                            model: ["Seleccione material" ,"hormigon", "pasta", "yeso", "asfalto"]
-                            onActivated: {
-                                if (material_selector.currentText != "seleccione material"){
-                                    manager.select_material(material_selector.currentText)
-                                }
-                            }
-                        }*/
+                        ParamArea{id: max_speed; name: "Veloc. de efector"; placeholder: qsTr("Dimension en m/s"); Layout.alignment: Qt.AlignRight;
+                                  input.onAccepted: {manager.write_value("jerk_speed", max_speed.paramText)}}
+                        ParamArea{id: kff_a; name: "Kff aceleración"; placeholder: qsTr("ingrese un valor"); help: "Ganancia de pre-alimentación de acceleración"; helpSide: "left";
+                                  Layout.alignment: Qt.AlignRight; input.onAccepted: {manager.tune_gain("SV_accelFFgain", "sw_accelFFGain", kff_a.paramText)}}
+                        ParamArea{id: kff_v; name: "Kff velocidad"; placeholder: qsTr("ingrese un valor"); help: "Ganancia de pre-alimentación de velocidad"; helpSide: "left";
+                                  Layout.alignment: Qt.AlignRight; input.onAccepted: {manager.tune_gain("SV_velocFFgain", "sw_velocFFGain", kff_v.paramText)}}
+                        ParamArea{id: kp_p; name: "Kp posición"; placeholder: qsTr("ingrese un valor"); help: "Ganancia proporcional de posición"; helpSide: "left"; Layout.alignment: Qt.AlignRight;
+                                  input.onAccepted: {manager.tune_gain("SV_posPropgain", "sw_posPropGain", kp_p.paramText)}}
+                        ParamArea{id: ki_p; name: "Ki posición"; placeholder: qsTr("ingrese un valor"); help: "Ganancia integral de posición"; helpSide: "left"; Layout.alignment: Qt.AlignRight;
+                                  input.onAccepted: {manager.tune_gain("SV_posItggain", "sw_posItgGain", ki_p.paramText)}}
+                        ParamArea{id: kp_v; name: "Kp velocidad"; placeholder: qsTr("ingrese un valor"); help: "Ganancia proporcional de velocidad"; helpSide: "left"; Layout.alignment: Qt.AlignRight;
+                                  input.onAccepted: {manager.tune_gain("SV_velocPropgain", "sw_velocPropGain", kp_v.paramText)}}
+                        ParamArea{id: ki_v; name: "Ki velocidad"; placeholder: qsTr("ingrese un valor"); help: "Ganancia integral de velocidad"; helpSide: "left"; Layout.alignment: Qt.AlignRight;
+                                  input.onAccepted: {manager.tune_gain("SV_velocItggain", "sw_velocItgGain", ki_v.paramText)}}
                     }
                 }
             }

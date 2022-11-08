@@ -28,19 +28,10 @@ from PyQt5.QtCore import pyqtSlot, QObject, pyqtSignal, QThread, QTimer, QPoint
 
 i18n_catalog = i18nCatalog("PluginUDEC")  # Translates to a language Cura can read
 
-# CAMBIAR EL CALCULO DE PARAMETROS Y ELIMINAR LAS CAJAS DE TEXTO EN LA PRIMERA
-# PESTAÑA
-# rp.W_B:=(SQRT(3)/6)*rp.S_B;
-# rp.w_P:=(SQRT(3)/6)*rp.s_P;
-
-# rp.U_B:=(SQRT(3)/3)*rp.S_B;
-# rp.u_P:=(SQRT(3)/3)*rp.s_P;
-
 
 def threaded(fn):
     def wrapper(*args, **kwargs):
         Thread(target=fn, args=args, kwargs=kwargs).start()
-        # multiprocessing.Process(target=fn, args=args, kwargs=kwargs).start()
     return wrapper
 
 
@@ -53,9 +44,6 @@ class PluginUDEC(QObject, Extension):
     lock = Lock()
     end_flag = multiprocessing.Value('b', True)
     message_flag = multiprocessing.Value('b', False)
-    #message_title = Array('c', 40, lock=lock)
-    #message_content = Array('c', 140, lock=lock)
-    #message_style = Array('c', 10, lock=lock)
 
     def __init__(self) -> None:
         super().__init__()
@@ -74,14 +62,6 @@ class PluginUDEC(QObject, Extension):
         self.ip = ""
         self.loading_is_open = False
         self.plc = LogixDriver('152.74.22.162/3', init__program_tags=False)
-
-
-
-        #self.worker = file_worker(self)
-        #self.worker.file_changed.connect(self.file_changed)
-        #self.worker_thread = QThread()
-        #self.worker.moveToThread(self.worker_thread)
-        #self.worker_thread.start()
 
     @pyqtSlot(str)
     def select_material(self, selected_material):
@@ -200,13 +180,11 @@ class PluginUDEC(QObject, Extension):
 
         try:
             tag_names = self.extract_names(tag_list)
-            #self.plc = LogixDriver(152.74.22.162/2, init__program_tags=False)
             n_tags = len(tag_names)
             print(self.plc.connected)
             if not self.plc.connected:
                 self.plc.open()
             tag_read = self.plc.read(*tag_names)
-            #plc.close()
             values = self.extract_values(tag_read, n_tags)
             self.saved_values = values
             if self.loading_is_open:
@@ -239,7 +217,6 @@ class PluginUDEC(QObject, Extension):
     @pyqtSlot(str, result=list)
     def plc_info(self, ip) -> List[str]:
         try:
-            #with LogixDriver(ip, init__program_tags=True) as plc:
             print(self.plc.connected)
             if not self.plc.connected:
                 self.plc.open()
@@ -265,7 +242,6 @@ class PluginUDEC(QObject, Extension):
     @pyqtSlot()
     def send_instructions(self):
         n_instructions = len(self.positions_list)
-        # with LogixDriver(self.ip) as plc:
         if not self.plc.connected:
             self.plc.open()
         is_printing = self.plc.read('Program:MainProgram.sw_beginapp').value
@@ -366,7 +342,6 @@ class PluginUDEC(QObject, Extension):
     @pyqtSlot(result=list)
     def get_progress_percentage(self):
         try:
-            # with LogixDriver(self.ip, init__program_tags=False) as plc:
             step = self.plc.read('i').value
             self.prev_step = step
             if self.loading_is_open:
@@ -401,7 +376,6 @@ class PluginUDEC(QObject, Extension):
                 return True
 
     def check_servos(self):
-        # with LogixDriver(self.ip, init__program_tags=True) as plc:
         if not self.plc.connected:
             self.plc.open()
         servos_are_active = self.plc.read('Actuador_B1.ServoActionStatus').value
@@ -419,6 +393,7 @@ class PluginUDEC(QObject, Extension):
         with LogixDriver(self.ip, init__program_tags=False) as plc:
             position_info = plc.read(*tags)
         positions = self.extract_values(position_info, 3)
+        positions = [round(value) for value in positions]
         return positions
 
     @pyqtSlot(float, float, float)
@@ -426,7 +401,6 @@ class PluginUDEC(QObject, Extension):
         print(x_pos, y_pos, z_pos)
         servo_pos = self.inv_kin_problem([[x_pos, y_pos, z_pos - self.params[3], 6000]], self.params)
         print(servo_pos)
-        # with LogixDriver(self.ip, init__program_tags=False) as plc:
         is_printing = self.plc.read('Program:MainProgram.sw_beginapp').value
         if self.plc.connected and not is_printing:
             self.plc.write('Program:MainProgram.coor_move_array{3}', self.flatten(servo_pos)) # coor_move_array{3}
@@ -606,7 +580,7 @@ class PluginUDEC(QObject, Extension):
         axis = []
         for i in range(len(coordinates)):
             axis.append(coordinates[i][column])
-        return axis  # numpy.array(axis)
+        return axis
 
     def split_lines(self, base_text) -> List[str]:
         """Splits the given text into lines and saves them onto a list. Returns the list."""
@@ -831,20 +805,17 @@ class PluginUDEC(QObject, Extension):
 
     @pyqtSlot(result=str)
     def get_message_title(self) -> str:
-        title = str(self.message_title)#.value)
-        #title = title[2:-1]
+        title = str(self.message_title)
         return title
 
     @pyqtSlot(result=str)
     def get_message_content(self) -> str:
-        content = str(self.message_content)#.value)
-        #content = content[2:-1]
+        content = str(self.message_content)
         return content
 
     @pyqtSlot(result=str)
     def get_message_style(self) -> str:
-        style = str(self.message_style)#.value)
-        #style = style[2:-1]
+        style = str(self.message_style)
         return style
 
     @pyqtSlot(str, str, str)
@@ -865,36 +836,3 @@ class PluginUDEC(QObject, Extension):
             Logger.log("e", "Not creating message window since the QML component failed to be created.")
             return
         self.message_view.show()
-
-
-#class file_worker(QObject):
-#    file_changed = pyqtSignal(str)
-#
-#    @pyqtSlot(str)
-#    def run(self, path):
-#        self.showFileContent(path)
-
-#    def showFileContent(self, url) -> None:
-#        """Show the content of the selected file in the bottom right text box."""
-
-#        file = open(self.get_url(url), mode='r', encoding='utf-8')
-#        content = file.read()
-#        self.file_changed.emit(content)
-#        file.close()
-
-#    def get_url(self, url) -> str:
-#        """get the real URL for the selected file"""
-
-#        if platform.system() == 'Windows':
-#            fileUrl = self.get_os_path(url, '')
-#            return fileUrl
-#        fileUrl = self.get_os_path(url, '/')
-#        return fileUrl
-
-#    def get_os_path(self, url, separator) -> str:
-#        tmp = [separator]
-#        for i in range(len(url)):
-#            if i > 7:
-#                tmp[0] += str(url[i])
-#        file_path = ''.join(tmp)
-#        return file_path

@@ -21,11 +21,9 @@ Item {
         }
         Text {
             id: amount1
-            text: qsTr("+10")
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.rightMargin: 5
-            anchors.topMargin: 5
+            text: qsTr("10")
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
             font.bold: true
             transform: Rotation{origin.x: amount1.width/2; origin.y: amount1.height/2; angle: -rotation}
         }
@@ -46,11 +44,9 @@ Item {
         }
         Text {
             id: amount10
-            text: qsTr("+100")
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.rightMargin: 2
-            anchors.topMargin: 5
+            text: qsTr("100")
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
             font.bold: true
             transform: Rotation{origin.x: amount10.width/2; origin.y: amount10.height/2; angle: -rotation}
         }
