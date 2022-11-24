@@ -21,8 +21,9 @@ Window {
     property bool tagbox3_active: false
     property bool tagbox4_active: false
     property bool connected: false
-    property var total_instructions: ""
-    property var is_printing: false
+    property bool is_emergency: false
+    property string total_instructions: ""
+    property bool is_printing: false
 
     width: {
         if (Qt.platform.os == "linux"){
@@ -48,7 +49,7 @@ Window {
     }
     minimumHeight: {
         if (Qt.platform.os == "linux"){
-            580 * screenScaleFactor
+            590 * screenScaleFactor
         }
         else if (Qt.platform.os == "windows"){
             750 * screenScaleFactor
@@ -59,7 +60,7 @@ Window {
     }
     minimumWidth: {
         if (Qt.platform.os == "linux"){
-            730 * screenScaleFactor
+            900 * screenScaleFactor
         }
         else if (Qt.platform.os == "windows"){
             900 * screenScaleFactor
@@ -123,6 +124,7 @@ Window {
         anchors.bottomMargin: 10
         onClicked:{
             manager.send_instructions()
+            manager.check_servos()
         }
 
         style: ButtonStyle{
@@ -174,6 +176,53 @@ Window {
             is_printing = manager.switch_printing()
             monitoring_tab.item.set_progress_timer(is_printing)
         }
+    }    
+
+    Button{
+        id: emergency_stop
+
+        width: 150
+        height: 50
+        anchors.left: parent.left
+        anchors.leftMargin: 25
+        anchors.verticalCenter: start_printing.verticalCenter
+        style: ButtonStyle{
+            label: Image {
+                source: "./images/emergency.png";
+                fillMode: Image.PreserveAspectFit;
+                horizontalAlignment: Image.AlignLeft;
+            }
+            background: Rectangle{
+                border.width: 1
+                border.color: "darkgrey"
+                radius: 3
+                color: emergency_stop.hovered ? Qt.lighter("red", 1.2) : Qt.darker("#EBEBEB", 1.1)
+            }
+        }
+        Text
+        {
+            text: qsTr("Detener \nmotores")
+            anchors.right: parent.right
+            anchors.rightMargin: 10
+            anchors.verticalCenter: parent.verticalCenter
+            font.bold: true
+            font.pointSize: 14
+            color: emergency_stop.hovered ? "white" : "black"
+        }
+        onClicked: {
+            message.text = qsTr("Está a punto de detener forzosamente los motores. \n ¿Está seguro que desea continuar?")
+            is_emergency = true
+            double_confirmation_window.visible = true
+        }
+    }
+
+    Timer{
+        id: emergency_on
+
+        interval: 2000
+        repeat: false
+        running: false
+        onTriggered: {manager.check_servos()}
     }
 
     Window{
@@ -204,7 +253,7 @@ Window {
                 anchors.bottom: buttons_row.top
                 anchors.bottomMargin: 20
                 anchors.horizontalCenter: buttons_row.horizontalCenter
-                text: qsTr("¿Está seguro que desea detener la impresión? \n Se perderá todo el progreso hasta ahora")
+                //text: qsTr("¿Está seguro que desea detener la impresión? \n Se perderá todo el progreso hasta ahora")
             }
 
             RowLayout{
@@ -218,7 +267,11 @@ Window {
                     Layout.preferredWidth: 100
                     Layout.preferredHeight: 30
                     text: 'Detener'
-                    onClicked: {manager.stop_printing(); double_confirmation_window.visible = false}
+                    onClicked: {
+                        if (is_emergency){manager.force_stop(); is_emergency = false; emergency_on.running = true}
+                        else{manager.stop_printing()}
+                        double_confirmation_window.visible = false
+                        is_printing = false}
                 }
                 Button{
                     id: decline
@@ -260,7 +313,7 @@ Window {
         Tab {
             id: login_tab
 
-            title: "Log to machine"
+            title: "Instrucciones y conexión"
             active: true
             enabled: true
 
@@ -302,8 +355,9 @@ Window {
 
                 Text {
                     id: udecText
-                    text: qsTr("Universidad de Concepción \n Departamento de ingenieria")
+                    text: qsTr("Universidad de Concepción \nDepartamento de ingenieria")
                     anchors.left: udecLogo.right
+                    anchors.leftMargin: 10
                     anchors.top:  udecLogo.top
                 }
 
@@ -353,7 +407,7 @@ Window {
                 Text{
                     id: login_title
 
-                    text: "Conecte a la impresora";
+                    text: "Conectese a la impresora";
                     font.bold: true;
                     font.pointSize: 16;
                     font.pixelSize: 20;
@@ -439,6 +493,8 @@ Window {
                             plc_info_model.setProperty(1, "value", plc_info[1])
                             plc_info_model.setProperty(2, "value", plc_info[2])
                             if (connected){
+                                monitoring_tab.enabled = true
+                                control_tab.enabled = true
                                 monitoring_tab.item.load_tags()
                                 monitoring_tab.item.set_progress_total()
                                 control_tab.item.get_actual_position()
@@ -485,12 +541,12 @@ Window {
                         text: qsTr("Para generar las instrucciones indique los \nparametros de la impresora")
                     }
 
-                    ParamArea{id: sb; paramText: "538"; name: "S_B"; help: " Es la distancia entre los actuadores del RDL "; helpSide: "left"; Layout.alignment: Qt.AlignHCenter}
+                    ParamArea{id: sb; paramText: "646"; name: "S_B"; help: " Es la distancia entre los actuadores del RDL "; helpSide: "left"; Layout.alignment: Qt.AlignHCenter}
                     ParamArea{id: sp; paramText: "108"; name: "s_p"; help: " Es la distancia entre los puntos de conexion \n del efector y los brazos del robot "; helpSide: "left"; Layout.alignment: Qt.AlignHCenter}
                     ParamArea{id: armLen; paramText: "983"; name: "Largo de brazo"; help: " Es el largo de los brazos de la impresora "; helpSide: "left"; Layout.alignment: Qt.AlignHCenter}
                     ParamArea{id: printerH; paramText: "1460"; name: "Altura impresora"; help: " Es la distancia entre la base del RDL y la \n superficie de impresion "; helpSide: "left"; Layout.alignment: Qt.AlignHCenter}
                     ParamArea{id: radio; paramText: "225"; name: "Radio WS"; help: " Es el radio de la base del espacio de trabajo "; helpSide: "left"; Layout.alignment: Qt.AlignHCenter}
-                    ParamArea{id: altura; paramText: "500"; name: "Altura WS"; help: " Es la altura del espacio de trabajo "; helpSide: "left"; Layout.alignment: Qt.AlignHCenter}
+                    ParamArea{id: altura; paramText: "505"; name: "Altura WS"; help: " Es la altura del espacio de trabajo "; helpSide: "left"; Layout.alignment: Qt.AlignHCenter}
 
                     Rectangle{
                         id: instructions_status
@@ -598,7 +654,7 @@ Window {
                     font.pixelSize: 20;
                     anchors.top: parent.top;
                     anchors.topMargin: 20;
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.horizontalCenter: progress_status.horizontalCenter
 
                 }                
 
@@ -680,8 +736,8 @@ Window {
                         id: chart
                         x: 180
                         y: 90
-                        width: 540
-                        height: 250
+                        width: parent.width
+                        height: parent.height - 60
                         anchors.left: parent.left
                         anchors.top: parent.top
                         backgroundColor: "whitesmoke"
@@ -783,8 +839,8 @@ Window {
                         id: chart2
                         x: 180
                         y: 90
-                        width: 540
-                        height: 250
+                        width: parent.width
+                        height: parent.height - 60
                         anchors.left: parent.left
                         anchors.top: parent.top
                         backgroundColor: "whitesmoke"
@@ -875,10 +931,11 @@ Window {
                             percentage_text.text = progress[0].toString() + "%"
                             process_progressBar.value = progress[0]
                             progress_step.text = "Instrucciones completadas: " + progress[1]+"/"+total_instructions
+                            progress_text.text = "Avance del proceso:"
                             if (progress[0] >= 100){
                                 progress_text.text = "Proceso terminado."
                                 progress_timer.running = false
-                                is_printing = manager.switch_printing()
+                                is_printing = false
                             }
                         }
                     }
@@ -1131,9 +1188,9 @@ Window {
                     anchors.horizontalCenter: make_move.horizontalCenter
                     anchors.bottom: make_move.top
                     anchors.bottomMargin: 20
-                    ParamArea{id: eje_x; name: "Eje X"; help: " Indique un valor entre -225 y 225 "; helpSide: "above"; input.width: 100}
-                    ParamArea{id: eje_y; name: "Eje Y"; help: " Indique un valor entre -225 y 225 "; helpSide: "above"; input.width: 100}
-                    ParamArea{id: eje_z; name: "Eje Z"; help: " Indique un valor entre 0 y 500 "; helpSide: "above"; input.width: 100}
+                    ParamArea{id: eje_x; name: "Eje X"; help: " Indique un valor entre -225 y 225 "; helpSide: "above"; input.width: 100; onInputChanged: {if (Math.abs(paramText) > 225){paramText = 225}}}
+                    ParamArea{id: eje_y; name: "Eje Y"; help: " Indique un valor entre -225 y 225 "; helpSide: "above"; input.width: 100; onInputChanged: {if (Math.abs(paramText) > 225){paramText = 225}}}
+                    ParamArea{id: eje_z; name: "Eje Z"; help: " Indique un valor entre 0 y 500 "; helpSide: "above"; input.width: 100}//; onInputChanged: {if (Math.abs(paramText) > 500){paramText = 500}}}
                 }
 
                 Button{
@@ -1161,7 +1218,7 @@ Window {
                         font.pointSize: 14
                     }
                     onClicked: {
-                        manager.move_to(eje_x.paramText, eje_y.paramText, eje_z.paramText)
+                        manager.move_to(eje_x.paramText, eje_y.paramText, - eje_z.paramText)
                     }
                 }
 
@@ -1241,6 +1298,7 @@ Window {
                                 font.pointSize: 14
                             }
                             onClicked: {
+                                message.text = qsTr("¿Está seguro que desea detener la impresión? \n Se perderá todo el progreso hasta ahora")
                                 double_confirmation_window.visible = true
                             }
                         }

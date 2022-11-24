@@ -245,9 +245,11 @@ class PluginUDEC(QObject, Extension):
         if not self.plc.connected:
             self.plc.open()
         is_printing = self.plc.read('Program:MainProgram.sw_beginapp').value
+        print('Program:MainProgram.Matriz_L{'+str(n_instructions)+'}')
         if self.plc.connected and not is_printing:
-            self.plc.write('Program:MainProgram.Matriz_L{'+str(n_instructions)+'}',
+            self.plc.write('Program:MainProgram.Matriz_L{'+str(n_instructions)+'}',   # ARREGLAR LA SOBRESCRITURA DEL LARGO DE INSTRUCCIONES AL EJECUTAR MOVIMIENTO ANTES DE ENVIAR INSTRUCCIONES
                       self.positions_list)
+            self.plc.write('Program:MainProgram.total_coordinates', self.total_coordinates)
             self.set_message_params('i', 'Operacion finalizada',
                                     'Las instrucciones fueron enviadas a la '
                                     'impresora. Puede monitorear el proceso en '
@@ -366,21 +368,26 @@ class PluginUDEC(QObject, Extension):
     @pyqtSlot(result=bool)
     def switch_printing(self):
         self.check_servos()
-        with LogixDriver(self.ip, init__program_tags=True) as plc:
-            read_state = plc.read('Program:MainProgram.sw_beginapp').value
-            if read_state:
-                plc.write('Program:MainProgram.sw_beginapp', 0)
-                return False
-            else:
-                plc.write('Program:MainProgram.sw_beginapp', 1)
-                return True
+        if not self.plc.connected:
+            self.plc.open()
+        read_state = self.plc.read('Program:MainProgram.sw_beginapp').value
+        if read_state:
+            self.plc.write('Program:MainProgram.sw_beginapp', 0)
+            return False
+        else:
+            self.plc.write('Program:MainProgram.sw_beginapp', 1)
+            return True
 
+    @pyqtSlot()
     def check_servos(self):
         if not self.plc.connected:
             self.plc.open()
         servos_are_active = self.plc.read('Actuador_B1.ServoActionStatus').value
+        printing_done = self.plc.read('Program:MainProgram.sw_is_printing_done').value
         if not servos_are_active:
             self.plc.write('Program:MainProgram.sw_start_servos', 1)
+            self.plc.write('Program:MainProgram.sw_init_var', 1)
+        if printing_done and servos_are_active:
             self.plc.write('Program:MainProgram.sw_init_var', 1)
 
     @pyqtSlot(result=str)
@@ -402,7 +409,8 @@ class PluginUDEC(QObject, Extension):
         servo_pos = self.inv_kin_problem([[x_pos, y_pos, z_pos - self.params[3], 6000]], self.params)
         print(servo_pos)
         is_printing = self.plc.read('Program:MainProgram.sw_beginapp').value
-        if self.plc.connected and not is_printing:
+        is_homing = self.plc.read('sw_startposition').value
+        if self.plc.connected and not is_printing and not is_homing:
             self.plc.write('Program:MainProgram.coor_move_array{3}', self.flatten(servo_pos)) # coor_move_array{3}
             self.plc.write('Program:MainProgram.sw_coor_move', 1)
         else:
@@ -421,7 +429,25 @@ class PluginUDEC(QObject, Extension):
     def stop_printing(self):
         if not self.plc.connected:
             self.plc.open()
-        self.plc.write('Program:MainProgram.sw_stop_printing', 1)
+        is_done_printing = self.plc.read('Program:MainProgram.sw_is_printing_done').value
+        is_homing = self.plc.read('sw_startposition').value
+        step = self.plc.read('i').value
+        if step != 0 and not is_done_printing and not is_homing:
+            self.plc.write('Program:MainProgram.sw_stop_printing', 1)
+        elif is_homing:
+            self.set_message_params('e', 'Operacion cancelada',
+                                    'La impresora se encuentra en proceso de homing.')
+            self.progress_end.emit()
+        else:
+            self.set_message_params('e', 'Operacion cancelada',
+                                    'La impresora no se encuentra trabajando.')
+            self.progress_end.emit()
+
+    @pyqtSlot()
+    def force_stop(self):
+        if not self.plc.connected:
+            self.plc.open()
+        self.plc.write('Program:MainProgram.sw_off_servos', 1)
 
     @pyqtSlot(result=list)
     def get_gains(self):
@@ -537,6 +563,7 @@ class PluginUDEC(QObject, Extension):
         height """
 
         for i in range(len(coordinates)):
+            coordinates[i][2] *= -1
             coordinates[i][2] -= height
         return coordinates
 
