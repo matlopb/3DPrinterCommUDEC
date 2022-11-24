@@ -274,7 +274,7 @@ class PluginUDEC(QObject, Extension):
         coordinates = self.get_coordinates(self.split_lines(self.get_gcode()))
         self.total_coordinates = len(coordinates)
         if self.fits_in_ws(ws_radio, ws_height, coordinates):
-            ws_coordinates = self.z_bias(coordinates, float(height))
+            ws_coordinates = self.z_bias(coordinates, float(height), float(ws_height))
             try:
                 self.inv_kin_problem(ws_coordinates, params)
                 self.positions_list = self.flatten(self.positions_list)
@@ -406,7 +406,7 @@ class PluginUDEC(QObject, Extension):
     @pyqtSlot(float, float, float)
     def move_to(self, x_pos, y_pos, z_pos):
         print(x_pos, y_pos, z_pos)
-        servo_pos = self.inv_kin_problem([[x_pos, y_pos, z_pos - self.params[3], 6000]], self.params)
+        servo_pos = self.inv_kin_problem([[x_pos, y_pos, z_pos - self.params[3] + self.params[5], 6000]], self.params)
         print(servo_pos)
         is_printing = self.plc.read('Program:MainProgram.sw_beginapp').value
         is_homing = self.plc.read('sw_startposition').value
@@ -491,10 +491,9 @@ class PluginUDEC(QObject, Extension):
             return
         coordinates = self.get_coordinates(self.split_lines(self.get_gcode()))
         if self.fits_in_ws(ws_radio, ws_height, coordinates):
-            ws_coordinates = self.z_bias(coordinates, float(height))
-            parameters = [sb, sp, arm_length, ws_radio]
+            ws_coordinates = self.z_bias(coordinates, float(height), float(ws_height))
             try:
-                self.inv_kin_problem(ws_coordinates, parameters)
+                self.inv_kin_problem(ws_coordinates, params)
             except ValueError:
                 self.set_message_params('e', 'Se produjo un error', 'Se ha producido un error de calculo. Por favor '
                                                                     'revise que los datos de impresora esten '
@@ -558,13 +557,13 @@ class PluginUDEC(QObject, Extension):
                 return False
         return True
 
-    def z_bias(self, coordinates, height) -> List[List[float]]:
+    def z_bias(self, coordinates, height, ws_height) -> List[List[float]]:
         """Returns the given coordinates with an added bias on the Z axis. This bias depends on the specified RDL
         height """
 
         for i in range(len(coordinates)):
             coordinates[i][2] *= -1
-            coordinates[i][2] -= height
+            coordinates[i][2] -= height - ws_height
         return coordinates
 
     def inv_kin_problem(self, coordinates, parameters):

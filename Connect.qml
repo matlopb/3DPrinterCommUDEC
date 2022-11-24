@@ -1218,7 +1218,7 @@ Window {
                         font.pointSize: 14
                     }
                     onClicked: {
-                        manager.move_to(eje_x.paramText, eje_y.paramText, - eje_z.paramText)
+                        manager.move_to(eje_x.paramText, eje_y.paramText, -eje_z.paramText)
                     }
                 }
 
