@@ -333,8 +333,10 @@ class PluginUDEC(QObject, Extension):
     @pyqtSlot(str, float)
     def write_value(self, tag_name, new_value):
         tag_valid_name = self.extract_tag_name(tag_name)
-        with LogixDriver(self.ip) as plc:
-            plc.write(tag_valid_name, new_value)
+        if not self.plc.connected:
+            self.plc.open()
+        #with LogixDriver(self.ip) as plc:
+        self.plc.write(tag_valid_name, new_value)
 
     @pyqtSlot(str, str, float)
     def tune_gain(self, tag, switch, gain_value):
@@ -455,6 +457,10 @@ class PluginUDEC(QObject, Extension):
             self.plc.open()
         gains_list = self.plc.read('Program:MainProgram.SV_gains{6}').value
         return gains_list
+
+    @pyqtSlot(float)
+    def tune_speed(self, quotient):
+        self.write_value('move_speed_gain', quotient/100)
 
 
 # ----------------------------------------------------------------------------------------------------

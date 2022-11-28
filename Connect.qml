@@ -3,6 +3,7 @@ import QtQml 2.0
 import QtQuick.Window 2.15
 import QtCharts 2.0
 import QtQuick.Controls 1.4
+//import QtQuick.Controls 2.15
 import QtQuick.Controls.Styles 1.4
 import QtQuick.Layouts 1.3
 
@@ -24,6 +25,8 @@ Window {
     property bool is_emergency: false
     property string total_instructions: ""
     property bool is_printing: false
+    property string ws_radio: ""
+    property string ws_altura: ""
 
     width: {
         if (Qt.platform.os == "linux"){
@@ -525,6 +528,7 @@ Window {
 
                 ColumnLayout
                 {
+                    id: paramcolumn
                     anchors.horizontalCenter: params_title.horizontalCenter
                     anchors.top: params_title.bottom;
                     anchors.topMargin: 20;
@@ -545,8 +549,8 @@ Window {
                     ParamArea{id: sp; paramText: "108"; name: "s_p"; help: " Es la distancia entre los puntos de conexion \n del efector y los brazos del robot "; helpSide: "left"; Layout.alignment: Qt.AlignHCenter}
                     ParamArea{id: armLen; paramText: "983"; name: "Largo de brazo"; help: " Es el largo de los brazos de la impresora "; helpSide: "left"; Layout.alignment: Qt.AlignHCenter}
                     ParamArea{id: printerH; paramText: "1460"; name: "Altura impresora"; help: " Es la distancia entre la base del RDL y la \n superficie de impresion "; helpSide: "left"; Layout.alignment: Qt.AlignHCenter}
-                    ParamArea{id: radio; paramText: "225"; name: "Radio WS"; help: " Es el radio de la base del espacio de trabajo "; helpSide: "left"; Layout.alignment: Qt.AlignHCenter}
-                    ParamArea{id: altura; paramText: "505"; name: "Altura WS"; help: " Es la altura del espacio de trabajo "; helpSide: "left"; Layout.alignment: Qt.AlignHCenter}
+                    ParamArea{id: radio; paramText: "225"; name: "Radio WS"; help: " Es el radio de la base del espacio de trabajo "; helpSide: "left"; Layout.alignment: Qt.AlignHCenter; input.onTextChanged: ws_radio = paramText}
+                    ParamArea{id: altura; paramText: "505"; name: "Altura WS"; help: " Es la altura del espacio de trabajo "; helpSide: "left"; Layout.alignment: Qt.AlignHCenter; input.onTextChanged: ws_altura = paramText}
 
                     Rectangle{
                         id: instructions_status
@@ -1185,13 +1189,15 @@ Window {
 
                 RowLayout{
                     spacing: 30
-                    anchors.horizontalCenter: make_move.horizontalCenter
-                    anchors.bottom: make_move.top
-                    anchors.bottomMargin: 20
-                    ParamArea{id: eje_x; name: "Eje X"; help: " Indique un valor entre -225 y 225 "; helpSide: "above"; input.width: 100; onInputChanged: {if (Math.abs(paramText) > 225){paramText = 225}}}
-                    ParamArea{id: eje_y; name: "Eje Y"; help: " Indique un valor entre -225 y 225 "; helpSide: "above"; input.width: 100; onInputChanged: {if (Math.abs(paramText) > 225){paramText = 225}}}
-                    ParamArea{id: eje_z; name: "Eje Z"; help: " Indique un valor entre 0 y 500 "; helpSide: "above"; input.width: 100}//; onInputChanged: {if (Math.abs(paramText) > 500){paramText = 500}}}
+                    anchors.horizontalCenter: max_speed.horizontalCenter
+                    anchors.bottom: max_speed.top
+                    anchors.bottomMargin: 10
+                    ParamArea{id: eje_x; name: "Eje X"; help: " Indique un valor entre -" + ws_radio + " y " + ws_radio; helpSide: "above"; input.width: 100; input.onTextChanged:  {if (parseInt(eje_x.paramText) > parseInt(ws_radio)){eje_x.paramText = parseInt(ws_radio)} if (parseInt(eje_x.paramText) < -parseInt(ws_radio)){eje_x.paramText = -parseInt(ws_radio)}}}
+                    ParamArea{id: eje_y; name: "Eje Y"; help: " Indique un valor entre -" + ws_radio + " y " + ws_radio; helpSide: "above"; input.width: 100; input.onTextChanged:  {if (parseInt(eje_y.paramText) > parseInt(ws_radio)){eje_y.paramText = parseInt(ws_radio)} if (parseInt(eje_y.paramText) < -parseInt(ws_radio)){eje_y.paramText = -parseInt(ws_radio)}}}
+                    ParamArea{id: eje_z; name: "Eje Z"; help: " Indique un valor entre 0 y " + ws_altura; helpSide: "above"; input.width: 100; input.onTextChanged:  {if (parseInt(eje_z.paramText) > parseInt(ws_altura)){eje_z.paramText = parseInt(ws_altura)} if (parseInt(eje_z.paramText) < 0){eje_z.paramText = 0}}}
                 }
+
+                ParamArea{id: max_speed; name: "Veloc. de efector"; placeholder: qsTr("Dimension en m/s"); anchors.horizontalCenter: make_move.horizontalCenter; anchors.bottom: make_move.top; anchors.bottomMargin: 10; input.onAccepted: {manager.write_value("jerk_speed", max_speed.paramText)}}
 
                 Button{
                     id: make_move
@@ -1302,8 +1308,22 @@ Window {
                                 double_confirmation_window.visible = true
                             }
                         }
-                        ParamArea{id: max_speed; name: "Veloc. de efector"; placeholder: qsTr("Dimension en m/s"); Layout.alignment: Qt.AlignRight;
-                                  input.onAccepted: {manager.write_value("jerk_speed", max_speed.paramText)}}
+
+                        SpinBox{
+                            id: speed_tune_button
+
+                            Layout.preferredWidth: 100
+                            Layout.preferredHeight: 25
+                            Layout.alignment: Qt.AlignRight
+                            maximumValue: 200
+                            minimumValue: 1
+                            horizontalAlignment: Qt.AlignCenter
+                            suffix: "%"
+                            value: 100
+                            cursorPosition: 1
+                            onValueChanged: {console.log("valor cambiado a " + value); manager.tune_speed(value)}
+                        }
+
                         ParamArea{id: kff_a; name: "Kff aceleración"; placeholder: qsTr("ingrese un valor"); help: "Ganancia de pre-alimentación de acceleración"; helpSide: "left";
                                   Layout.alignment: Qt.AlignRight; input.onAccepted: {manager.tune_gain("SV_accelFFgain", "sw_accelFFGain", kff_a.paramText)}}
                         ParamArea{id: kff_v; name: "Kff velocidad"; placeholder: qsTr("ingrese un valor"); help: "Ganancia de pre-alimentación de velocidad"; helpSide: "left";
