@@ -425,7 +425,17 @@ class PluginUDEC(QObject, Extension):
     @pyqtSlot()
     def run_home(self):
         with LogixDriver(self.ip, init__program_tags=False) as plc:
-            plc.write('sw_startposition', 1)
+            is_printing = self.plc.read('Program:MainProgram.is_printing').value
+            is_moving = plc.read('Program:MainProgram.sw_coor_move').value
+            is_printer_busy = is_moving or is_printing
+            if not is_printer_busy:
+                plc.write('sw_startposition', 1)
+            else:
+                self.set_message_params('e', 'Operacion cancelada',
+                                        'La impresora se encuentra trabajando. '
+                                        'Detenga la impresion en la pestaña "Control" '
+                                        'o espere a que finalice el movimiento.')
+                self.progress_end.emit()
 
     @pyqtSlot()
     def stop_printing(self):
