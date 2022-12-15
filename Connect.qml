@@ -1,14 +1,14 @@
 import QtQuick 2.15
 import QtQml 2.0
 import QtQuick.Window 2.15
-import QtCharts 2.0
-import QtQuick.Controls 1.4
+//import QtCharts 2.4
+import QtQuick.Controls
 //import QtQuick.Controls 2.15
-import QtQuick.Controls.Styles 1.4
-import QtQuick.Layouts 1.3
+//import QtQuick.Controls.Styles 1.4
+import QtQuick.Layouts //1.3
 
 
-Window {
+ApplicationWindow {
     id: login_dialog
 
     visible: true
@@ -33,7 +33,7 @@ Window {
             900 * screenScaleFactor
         }
         else if (Qt.platform.os == "windows"){
-            900 * screenScaleFactor
+            1100 * screenScaleFactor
         }
         else if (Qt.platform.os == "osx"){
             900 * screenScaleFactor
@@ -66,12 +66,12 @@ Window {
             900 * screenScaleFactor
         }
         else if (Qt.platform.os == "windows"){
-            900 * screenScaleFactor
+            1100 * screenScaleFactor
         }
         else if (Qt.platform.os == "osx"){
             900 * screenScaleFactor
         }
-    }
+    }    
 
     Component.onCompleted: {
             x = Screen.width / 2 - width / 2
@@ -84,7 +84,7 @@ Window {
             }
         }
     onWidthChanged: frame.width = width - 50
-    onHeightChanged: frame.height = height - 60
+    onHeightChanged: frame.height = height - 80
 
     Connections {
         target: manager
@@ -96,12 +96,16 @@ Window {
         }
 
         function onProgressChanged(progress) {
-            login_tab.item.change_progress(progress)            
-            login_tab.item.set_instructions_status("Cálculo en proceso...")
+            //login_tab.item.change_progress(progress)
+            login_zone.change_progress(progress)
+            //login_tab.item.set_instructions_status("Cálculo en proceso...")
+            login_zone.set_instructions_status("Cálculo en proceso...")
         }
 
         function onProgressTotalChanged(total) {
-            login_tab.item.change_bar_total(total)
+            //login_tab.item.change_bar_total(total)
+            console.log(total)
+            login_zone.change_bar_total(total)
         }
 
         function onConnectionAchieved(){
@@ -109,42 +113,29 @@ Window {
         }
     }
 
-    onClosing:{
+    /*onClosing:{
         close.accepted = false
         monitoring_tab.item.stop_timer()
         close.accepted = true
-    }
+    }*/
 
     Button{
         id: send_instructions
 
-        width: 200;
+        width: 160;
         height: 30;
         enabled: connected
         anchors.right: start_printing.left
         anchors.rightMargin: 25;
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 10
+        text: qsTr("Enviar instrucciones")
+        font.pixelSize: 14
+        icon.source: "./images/send.png"
+        display: Button.TextBesideIcon
         onClicked:{
             manager.send_instructions()
             manager.check_servos()
-        }
-
-        style: ButtonStyle{
-            label: Image
-            {
-                source: "./images/send.png";
-                fillMode: Image.PreserveAspectFit;
-                horizontalAlignment: Image.AlignLeft;
-            }
-        }
-        Text
-        {
-            text: qsTr("Enviar instrucciones")
-            color: send_instructions.enabled ? "black":"darkgrey"
-            anchors.right: parent.right
-            anchors.rightMargin: 10
-            anchors.verticalCenter: parent.verticalCenter
         }
     }
 
@@ -158,15 +149,19 @@ Window {
         anchors.rightMargin: 25;
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 10
-        style: ButtonStyle{
+        text: (is_printing) ? qsTr("Pausar \nimpresion") : qsTr("Iniciar \nimpresion")
+        font.pixelSize: 14
+        icon.source: (is_printing) ? "./images/pause.png" : "./images/play.png"
+        display: Button.TextBesideIcon
+        /*style: ButtonStyle{
             label: Image
             {
                 source: (is_printing) ? "./images/pause.png" : "./images/play.png";
                 fillMode: Image.PreserveAspectFit;
                 horizontalAlignment: Image.AlignLeft;
             }
-        }
-        Text
+        }*/
+        /*Text
         {
             text: (is_printing) ? qsTr("Pausar \nimpresion") : qsTr("Iniciar \nimpresion")
             horizontalAlignment: Text.AlignHCenter
@@ -174,7 +169,7 @@ Window {
             anchors.right: parent.right
             anchors.rightMargin: 10
             anchors.verticalCenter: parent.verticalCenter
-        }
+        }*/
         onClicked: {
             is_printing = manager.switch_printing()
             monitoring_tab.item.set_progress_timer(is_printing)
@@ -189,7 +184,27 @@ Window {
         anchors.left: parent.left
         anchors.leftMargin: 25
         anchors.verticalCenter: start_printing.verticalCenter
-        style: ButtonStyle{
+        text: qsTr("Detener \nmotores")
+        font.pixelSize: 14
+        font.bold: true
+        icon.source: "./images/emergency.png"
+        //display: Button.TextBesideIcon
+        contentItem: Text {
+                text: emergency_stop.text
+                font.pixelSize: emergency_stop.font.pixelSize
+                font.bold: emergency_stop.font.bold
+                opacity: enabled ? 1.0 : 0.3
+                horizontalAlignment: Text.AlignRight
+                color: emergency_stop.hovered ? "white" : "black"
+        }
+        background: Rectangle {
+                opacity: enabled ? 1 : 0.3
+                border.color: "darkgrey"
+                color: emergency_stop.hovered ? Qt.lighter("red", 1.2) : 'whitesmoke'
+                border.width: 1
+                radius: 3
+        }
+        /*style: ButtonStyle{
             label: Image {
                 source: "./images/emergency.png";
                 fillMode: Image.PreserveAspectFit;
@@ -201,8 +216,8 @@ Window {
                 radius: 3
                 color: emergency_stop.hovered ? Qt.lighter("red", 1.2) : Qt.darker("#EBEBEB", 1.1)
             }
-        }
-        Text
+        }*/
+        /*Text
         {
             text: qsTr("Detener \nmotores")
             anchors.right: parent.right
@@ -211,7 +226,7 @@ Window {
             font.bold: true
             font.pointSize: 14
             color: emergency_stop.hovered ? "white" : "black"
-        }
+        }*/
         onClicked: {
             message.text = qsTr("Está a punto de detener forzosamente los motores. \n ¿Está seguro que desea continuar?")
             is_emergency = true
@@ -288,13 +303,34 @@ Window {
         }
     }
 
-    TabView {
-        id: frame
-
+    header: TabBar{
+        id: coreBar
+        width: parent.width - 50
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: parent.top
+        TabButton{
+            height: 40
+            text: qsTr("Instrucciones y conexión")
+        }
+        TabButton{
+            height: 40
+            text: qsTr("Monitoreo de proceso")
+        }
+        TabButton{
+            height: 40
+            text: qsTr("Control y movimiento")
+        }
+    }
 
-        style: TabViewStyle {
+    StackLayout {
+        id: frame        
+        anchors.top: coreBar.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        currentIndex: coreBar.currentIndex
+
+        //anchors.horizontalCenter: parent.horizontalCenter
+        //anchors.top: parent.top
+
+        /*style: TabViewStyle {
                 frameOverlap: 1
                 tab: Rectangle {
                     color: styleData.selected ? "ghostwhite" :"silver"
@@ -311,18 +347,16 @@ Window {
                     }
                 }
                 frame: Rectangle { color: "steelblue" }
-            }
+            }*/
 
-        Tab {
+
+        Item {
             id: login_tab
 
-            title: "Instrucciones y conexión"
-            active: true
-            enabled: true
-
             Rectangle {
-                width: frame.width
-                height: frame.height
+                id: login_zone
+                width: login_dialog.width - 50
+                height: login_dialog.height - 80
                 border.width: 1
 
                 function notify_gcode_status(){
@@ -331,18 +365,19 @@ Window {
                 }
                 function set_instructions_status(status){
                     instructions_status_text.text = qsTr(status)
-                    if (progressBar.value == progressBar.maximumValue){
+                    if (progressBar.value == progressBar.to){
                         total_instructions = manager.get_n_coor()
                         instructions_status_text.text = qsTr("Se generaron "+ total_instructions +" posiciones. Las instrucciones estan listas para su envío.")
                     }
                 }
                 function change_progress(progress) {
                     progressBar.value = progress
+                    console.log(progress)
                 }
 
                 function change_bar_total(total) {
-                    progressBar.maximumValue = total
-                }                
+                    progressBar.to = total
+                }
 
                 Image {
                     id: udecLogo
@@ -461,7 +496,7 @@ Window {
                             width: 140
                             placeholderText: qsTr("e.g. 192.168.1.34/2");
                             text: qsTr("152.74.22.162/3");
-                            validator: RegExpValidator{ regExp: /^(([01]?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))\.){3}([01]?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))\/(([0-6]|3([0])|2([0-9]))\.)$/}
+                            validator: RegularExpressionValidator{ regularExpression: /^(([01]?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))\.){3}([01]?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))\/(([0-6]|3([0])|2([0-9]))\.)$/}
                         }
                     }
 
@@ -472,13 +507,13 @@ Window {
                         Layout.preferredHeight: 30
                         enabled: false
                         Layout.alignment: Qt.AlignHCenter
-                        style: ButtonStyle{
+                        /*style: ButtonStyle{
                             label: Image {
                                 source: "./images/connect.png";
                                 fillMode: Image.PreserveAspectFit;
                                 horizontalAlignment: Image.AlignLeft;
                             }
-                        }
+                        }*/
                         Text
                         {
                             text: qsTr("Conectar")
@@ -522,8 +557,9 @@ Window {
                     font.pixelSize: 20;
                     anchors.top: parent.top;
                     anchors.topMargin: 20;
-                    anchors.right: parent.right;
-                    anchors.rightMargin: 100;
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.horizontalCenterOffset: parent.width/4
+                    //anchors.rightMargin: 100;
                 }
 
                 ColumnLayout
@@ -555,7 +591,7 @@ Window {
                     Rectangle{
                         id: instructions_status
 
-                        Layout.preferredWidth: frame.width/3
+                        Layout.preferredWidth: login_zone.width/3
                         Layout.preferredHeight: 150
                         color: "whitesmoke"
                         Layout.alignment: Qt.AlignHCenter
@@ -576,9 +612,24 @@ Window {
                         ProgressBar {
                             id: progressBar
                             width: parent.width - 100
+                            height: 20
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.top: instructions_status_text.bottom
                             anchors.topMargin: 20
+                            from: 0
+                            background: Rectangle {
+                                            anchors.fill: parent
+                                            color: "white"
+                                            border.width: 1
+                                            border.color: 'black'
+                            }
+                            contentItem: Rectangle {
+                                            anchors.left: parent.left
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            height: parent.height - 4
+                                            width: parent.width * (parent.value/parent.to)
+                                            color: 'dodgerblue'
+                            }
                         }
                         Button{
                             id: generate_instructions
@@ -588,13 +639,13 @@ Window {
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.bottom: parent.bottom
                             anchors.bottomMargin: 10
-                            style: ButtonStyle{
+                            /*style: ButtonStyle{
                                 label: Image {
                                     source: "./images/write.png";
                                     fillMode: Image.PreserveAspectFit;
                                     horizontalAlignment: Image.AlignLeft;
                                 }
-                            }
+                            }*/
                             Text
                             {
                                 text: qsTr("Generar instrucciones")
@@ -611,22 +662,19 @@ Window {
                                 login_button.enabled = true
                             }
                         }
-                    }                   
+                    }
                 }
             }
         }
 //#################################################################################################################################################################################################
 //#################################################################################################################################################################################################
-        Tab {
+        Item {
             id: monitoring_tab
 
-            title: "Monitoreo"
-            active: true
-            enabled: true
             Rectangle {
 
-                width: frame.width
-                height: frame.height
+                width: login_dialog.width - 50
+                height: login_dialog.height - 60
                 border.width: 1
 
                 function load_tags(){
@@ -644,7 +692,7 @@ Window {
                     tagbox2_3.combobox.model = tag_list
                     tagbox2_4.combobox.model = tag_list
                 }
-                function set_progress_total() {process_progressBar.maximumValue = 100}
+                function set_progress_total() {process_progressBar.to = 100}
                 function set_progress_timer(state) {progress_timer.running = state}
                 function stop_timer() {date_timer.running = false}
 
@@ -660,7 +708,7 @@ Window {
                     anchors.topMargin: 20;
                     anchors.horizontalCenter: progress_status.horizontalCenter
 
-                }                
+                }
 
                 Rectangle{
                     id: chart_rect1
@@ -679,6 +727,7 @@ Window {
                         spacing: 5
                         anchors.horizontalCenter: chart.horizontalCenter
                         anchors.top: chart.bottom
+                        anchors.topMargin: 10
 
                         Tagbox{
                             id: tagbox_1
@@ -734,10 +783,33 @@ Window {
                         }
                     }
 
-
-
-                    ChartView {
+                    Image {
                         id: chart
+                        //width: parent.width -50
+                        //height: parent.height - 80
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.top: parent.top
+                        anchors.topMargin: 10
+                        source: "image://perflog/eventStatisticsPlot"
+                    }
+
+                    Timer{
+                        id: image_timer
+                        interval: 3000
+                        running: true
+                        repeat: true
+                        onTriggered:{
+                            manager.plot()
+                            reload()
+                            //chart.source = "image://perflog/eventStatisticsPlo"
+                            //chart.source = "image://perflog/eventStatisticsPlot"
+                            //console.log(chart.width, chart.height)
+                        }
+                        function reload() { var t = chart.source; chart.source = ""; chart.source = t; }
+                    }
+
+                    /*ChartView {
+                        //id: chart
                         x: 180
                         y: 90
                         width: parent.width
@@ -761,11 +833,11 @@ Window {
                             tickCount: 4
                         }
 
-                    }
+                    }*/
 
                 }
                 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-                Rectangle{
+                /*Rectangle{
                     id: chart_rect2
 
                     border.width: 1
@@ -866,7 +938,7 @@ Window {
 
                     }
 
-                }
+                }*/
 
                 Rectangle{
                     id: progress_status
@@ -924,6 +996,19 @@ Window {
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottom: parent.bottom
                         anchors.bottomMargin: 20
+                        background: Rectangle {
+                                        anchors.fill: parent
+                                        color: "white"
+                                        border.width: 1
+                                        border.color: 'black'
+                        }
+                        contentItem: Rectangle {
+                                        anchors.left: parent.left
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        height: parent.height - 4
+                                        width: parent.width * (parent.value/parent.to)
+                                        color: 'dodgerblue'
+                        }
                     }
                     Timer{
                         id: progress_timer
@@ -945,7 +1030,7 @@ Window {
                     }
                 }                
 
-                Component.onCompleted: {
+                /*Component.onCompleted: {
                     console.log("Se ha iniciado QML\n")
                     chart.createSeries(ChartView.SeriesTypeLine,"tag 1",time_axis,axisY)
                     chart.createSeries(ChartView.SeriesTypeLine,"tag 2",time_axis,axisY)
@@ -956,7 +1041,7 @@ Window {
                     chart2.createSeries(ChartView.SeriesTypeLine,"tag 6",time_axis2,axisY2)
                     chart2.createSeries(ChartView.SeriesTypeLine,"tag 7",time_axis2,axisY2)
                     chart2.createSeries(ChartView.SeriesTypeLine,"tag 8",time_axis2,axisY2)
-                }
+                }*/
 
                 Timer{
                     id: date_timer
@@ -1043,15 +1128,12 @@ Window {
 //#################################################################################################################################################################################################
 //#################################################################################################################################################################################################
 
-        Tab {
+        Item {
             id: control_tab
 
-            title: "Control"
-            active: true
-            enabled: true
             Rectangle {
-                width: frame.width
-                height: frame.height
+                width: login_dialog.width - 50
+                height: login_dialog.height - 60
                 border.width: 1
 
                 function get_actual_position(){
@@ -1207,13 +1289,13 @@ Window {
                     anchors.horizontalCenter: control_title.horizontalCenter
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 10
-                    style: ButtonStyle{
+                    /*style: ButtonStyle{
                         label: Image {
                             source: "./images/move.png";
                             fillMode: Image.PreserveAspectFit;
                             horizontalAlignment: Image.AlignLeft;
                         }
-                    }
+                    }*/
                     Text
                     {
                         text: qsTr("Realizar movimiento")
@@ -1261,13 +1343,13 @@ Window {
                             Layout.preferredWidth: 250
                             Layout.preferredHeight: 50
                             Layout.alignment: Qt.AlignHCenter
-                            style: ButtonStyle{
+                            /*style: ButtonStyle{
                                 label: Image {
                                     source: "./images/home.png";
                                     fillMode: Image.PreserveAspectFit;
                                     horizontalAlignment: Image.AlignLeft;
                                 }
-                            }
+                            }*/
                             Text
                             {
                                 text: qsTr("Volver al origen")
@@ -1287,13 +1369,13 @@ Window {
                             Layout.preferredWidth: 250
                             Layout.preferredHeight: 50
                             Layout.alignment: Qt.AlignHCenter
-                            style: ButtonStyle{
+                            /*style: ButtonStyle{
                                 label: Image {
                                     source: "./images/warning.png";
                                     fillMode: Image.PreserveAspectFit;
                                     horizontalAlignment: Image.AlignLeft;
                                 }
-                            }
+                            }*/
                             Text
                             {
                                 text: qsTr("Detener impresion")
@@ -1315,13 +1397,11 @@ Window {
                             Layout.preferredWidth: 100
                             Layout.preferredHeight: 25
                             Layout.alignment: Qt.AlignRight
-                            maximumValue: 200
-                            minimumValue: 1
-                            horizontalAlignment: Qt.AlignCenter
-                            suffix: "%"
+                            to: 200
+                            from: 1
                             value: 100
-                            cursorPosition: 1
-                            onValueChanged: {console.log("valor cambiado a " + value); manager.tune_speed(value)}
+                            textFromValue: function(value){return value.toString()+'%'}
+                            onValueModified: {console.log("valor cambiado a " + value)}//; manager.tune_speed(value)}
                         }
 
                         ParamArea{id: kff_a; name: "Kff aceleración"; placeholder: qsTr("ingrese un valor"); help: "Ganancia de pre-alimentación de acceleración"; helpSide: "left";

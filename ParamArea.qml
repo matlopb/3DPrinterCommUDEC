@@ -1,5 +1,5 @@
 import QtQuick 2.0
-import QtQuick.Controls 1.1
+import QtQuick.Controls //1.1
 
 Item
 {
@@ -21,7 +21,7 @@ Item
         width: parent.width;
         height: parent.height;
         placeholderText: qsTr("Dimensión en mm");
-        validator: RegExpValidator{ regExp: /\d{1,7}([.]\d{1,3})$|\d{1,7}/ }
+        //validator: RegExpValidator{ regExp: /\d{1,7}([.]\d{1,3})$|\d{1,7}/ }
     }
 
     Text

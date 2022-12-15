@@ -2,12 +2,12 @@ import QtQuick 2.15
 import QtQuick 2.7
 import QtQuick.Window 2.15
 import QtQuick 2.2
-import QtQuick.Controls 1.1
+import QtQuick.Controls //1.1
 import QtQuick.Controls 2.15 as QQC2
-import QtQuick.Controls.Styles 1.1
+//import QtQuick.Controls.Styles 1.1
 import QtQml.Models 2.15 as Modelsq
 import QtQuick.Layouts 1.1
-import QtQuick.Dialogs 1.1
+import QtQuick.Dialogs //1.1
 import QtQuick.Window 2.2
 import QtQml 2.0
 
@@ -114,7 +114,7 @@ Window
             }
         }
 
-        style: ButtonStyle
+        /*style: ButtonStyle
         {
             label: Image
             {
@@ -123,7 +123,7 @@ Window
                 fillMode: Image.PreserveAspectFit;
                 horizontalAlignment: Image.AlignLeft;
             }
-        }
+        }*/
 
         Text
         {
@@ -145,7 +145,7 @@ Window
         anchors.topMargin: 15;
         onClicked: dialog.close();
 
-        style: ButtonStyle
+        /*style: ButtonStyle
         {
             label: Image
             {
@@ -154,7 +154,7 @@ Window
                 fillMode: Image.PreserveAspectFit;
                 horizontalAlignment: Image.AlignLeft;
             }
-        }
+        }*/
         Text
         {
             text: qsTr("Cancelar")
@@ -260,7 +260,7 @@ Window
             anchors.topMargin: 20;
             onClicked: fileDialog.open();
 
-            style: ButtonStyle
+            /*style: ButtonStyle
             {
                 label: Image
                 {
@@ -268,7 +268,7 @@ Window
                     source: "./images/browse.png";
                     fillMode: Image.PreserveAspectFit;
                 }
-            }
+            }*/
         }
 
         FileDialog
@@ -276,7 +276,7 @@ Window
             id: fileDialog;
             title: "seleccione un archivo compatible";
             nameFilters: ["Archivos RSLogix (*.L5K)","Todos los archivos(*)"];
-            folder: shortcuts.documents;
+            //folder: shortcuts.documents;
             onAccepted:
             {
                 console.log("Se ha seleccionado " + fileDialog.fileUrl);
@@ -299,7 +299,7 @@ Window
             anchors.top: fileTextfield.bottom;
             anchors.topMargin: 20;
             anchors.horizontalCenter: fileTextfield.horizontalCenter;
-            ExclusiveGroup{ id: writeMethod}
+            //ExclusiveGroup{ id: writeMethod}
 
             RadioButton
             {
@@ -307,7 +307,7 @@ Window
 
                 checked: true;
                 text: qsTr("Sobrescribir");
-                exclusiveGroup: writeMethod;
+//                exclusiveGroup: writeMethod;
             }
 
             RadioButton
@@ -315,7 +315,7 @@ Window
                 id: newFile;
 
                 text: qsTr("Crear copia");
-                exclusiveGroup: writeMethod;
+//                exclusiveGroup: writeMethod;
             }
         }
 
@@ -380,7 +380,7 @@ Window
             onClicked: dirDialog.open();
             enabled: newFile.checked;
 
-            style: ButtonStyle
+            /*style: ButtonStyle
             {
                 label: Image
                 {
@@ -388,15 +388,15 @@ Window
                     source: "./images/browse.png";
                     fillMode: Image.PreserveAspectFit;
                 }
-            }
+            }*/
         }
 
         FileDialog
         {
             id: dirDialog;
             title: "Seleccione una carpeta";
-            selectFolder: true;
-            folder: shortcuts.documents;
+            //selectFolder: true;
+            //folder: shortcuts.documents;
             onAccepted:
             {
                 console.log("Se ha seleccionado el directorio " + dirDialog.folder);

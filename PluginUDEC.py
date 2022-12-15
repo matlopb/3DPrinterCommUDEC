@@ -21,10 +21,16 @@ from UM.PluginRegistry import PluginRegistry
 from UM.i18n import i18nCatalog
 from cura.CuraApplication import CuraApplication
 from .pycomm3.pycomm3 import LogixDriver
+from .resources import MatplotlibImageProvider as matplt
+from matplotlib import pyplot as plt
 
 import os
 
-from PyQt5.QtCore import pyqtSlot, QObject, pyqtSignal, QThread, QTimer, QPoint
+from PyQt6.QtCore import pyqtSlot, QObject, pyqtSignal, QThread, QTimer, QPoint
+import PyQt6.QtCore as QtCore
+import PyQt6.QtGui as QtGui
+import PyQt6.QtQuick as QtQuick
+import PyQt6.QtQml as QtQml
 
 i18n_catalog = i18nCatalog("PluginUDEC")  # Translates to a language Cura can read
 
@@ -62,6 +68,20 @@ class PluginUDEC(QObject, Extension):
         self.ip = ""
         self.loading_is_open = False
         self.plc = LogixDriver('152.74.22.162/3', init__program_tags=False)
+
+    @pyqtSlot()
+    def plot(self):
+        self.imageProvider = matplt.MatplotlibImageProvider()
+        x = [random.randint(0,50) for i in [1,2,3,4,5]]
+        y = [random.randint(0,100) for i in [1,2,3,4,5]]
+        print(x,y)
+        gain = 1.4
+        figure = self.imageProvider.addFigure("eventStatisticsPlot", figsize=(6.4*gain,4.8*gain))
+        ax = figure.add_subplot()
+        ax.grid(linewidth=10)
+        ax.set(aspect='auto', xlabel='Hora', ylabel='Valor', ylim=[0,100], xlim=[0,60])
+        ax.set_title("Visualización de variables", fontsize=10)
+        ax.plot(x,y, linewidth=10)
 
     @pyqtSlot(str)
     def select_material(self, selected_material):
@@ -207,7 +227,7 @@ class PluginUDEC(QObject, Extension):
 
     def show_connect(self):
         """Displays an error message with the given title and message"""
-
+        self.plot()
         self.create_view("Connect.qml")
         if self.connect_view is None:
             Logger.log("e", "Not creating Connect window since the QML component failed to be created.")
@@ -272,8 +292,11 @@ class PluginUDEC(QObject, Extension):
             self.progress_end.emit()
             return
         coordinates = self.get_coordinates(self.split_lines(self.get_gcode()))
+        print('PROCESS IS DONE')
         self.total_coordinates = len(coordinates)
+        print('PROCESS IS DONE')
         if self.fits_in_ws(ws_radio, ws_height, coordinates):
+            print('PROCESS IS DONE')
             ws_coordinates = self.z_bias(coordinates, float(height), float(ws_height))
             try:
                 self.inv_kin_problem(ws_coordinates, params)
@@ -291,6 +314,7 @@ class PluginUDEC(QObject, Extension):
                                     'realizada la conexion.')
             self.progress_end.emit()
 
+
     def flatten(self, list) -> List:
         flattened_list = [item for sublist in list for item in sublist]
         return flattened_list
@@ -299,7 +323,7 @@ class PluginUDEC(QObject, Extension):
     def look_for_gcode(self):
         scene = Application.getInstance().getController().getScene()
         if not hasattr(scene, "gcode_dict"):
-            Logger.log("e", "no gcode in system")
+            Logger.warning("no gcode in system")
             return False
         return True
 
@@ -567,9 +591,11 @@ class PluginUDEC(QObject, Extension):
 
         for element in coordinates:
             if abs(element[0]) > radio or abs(element[1]) > radio or abs(element[2]) > height:
+                print(element[0], radio, abs(element[1]), radio, abs(element[2]), height)
                 self.set_message_params('e', 'Coordenadas incompatibles',
                                         'La figura revanada es mas grande que '
                                         'el espacio de trabajo disponible.')
+                self.progress_end.emit()
                 return False
         return True
 
@@ -651,7 +677,7 @@ class PluginUDEC(QObject, Extension):
 
         scene = Application.getInstance().getController().getScene()
         if not hasattr(scene, "gcode_dict"):
-            Logger.log("e", "no gcode in system")
+            Logger.warning("no gcode in system")
             return ["No gcode in system"]
         gcode_dict = getattr(scene, "gcode_dict")
         if not gcode_dict:
@@ -691,7 +717,9 @@ class PluginUDEC(QObject, Extension):
         feed_rate = 60
         for line in filtered_lines:
             words = line.split()
-            if self.match_inline(['X'])(line):
+            #if self.match_inline(['M84'])(line):
+            #    continue
+            if self.match_inline(['X'])(line):                
                 x_axis = self.get_values('X', words)
             if self.match_inline(['Y'])(line):
                 y_axis = self.get_values('Y', words)
@@ -713,8 +741,10 @@ class PluginUDEC(QObject, Extension):
     def to_int(self, word) -> float:
         """Returns the value in the given word as a float"""
 
-        value = list(filter(self.is_int, list(word[0])))
+        value = list(filter(self.is_int, list(word[0])))        
         value = ''.join(value)
+        if value is '':
+            value = 100
         value = float(value)
         return value
 
@@ -803,7 +833,7 @@ class PluginUDEC(QObject, Extension):
             return False
 
         return find_word
-
+############################# quiza puedo acceder al qml engine a travez de CuraApplication
     def create_view(self, view) -> None:
         """Creates the view to be used."""
 
@@ -829,12 +859,13 @@ class PluginUDEC(QObject, Extension):
             Logger.log("d", "Message view created.")
 
         if view == "Connect.qml":
+            CuraApplication.getInstance()._qml_engine.addImageProvider('perflog', self.imageProvider)
             self.connect_view = CuraApplication.getInstance().createQmlComponent(path, {"manager": self})
             if self.connect_view is None:
                 Logger.log("e",
                            "Not creating Connect window since the message view variable is empty.")
                 return
-            Logger.log("d", "Connect view created.")
+            Logger.log("d", "Connect view created.")            
 
     def show_popup(self) -> None:
         """Show the GUI of the UDEC Plugin."""
