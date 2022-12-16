@@ -1,0 +1,1 @@
+Estos archivos se deben copiar dentro del directorio en el que está instalado Ultimaker Cura.
