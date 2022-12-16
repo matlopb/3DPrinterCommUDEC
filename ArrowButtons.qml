@@ -1,7 +1,6 @@
 import QtQuick.Layouts 1.3
 import QtQuick 2.15
-import QtQuick.Controls //1.4
-//import QtQuick.Controls.Styles 1.4
+import QtQuick.Controls
 
 Item {
     property alias lowButton: xplus1
@@ -12,6 +11,9 @@ Item {
 
         width: 40
         height: 80
+        icon.source: "./images/arrow.png"
+        icon.width: width
+        icon.height: height
         /*style: ButtonStyle{
             label: Image {
                 source: "./images/arrow.png";
@@ -35,6 +37,9 @@ Item {
         height: 80
         anchors.left: xplus1.right
         anchors.leftMargin: 10
+        icon.source: "./images/doublearrow.png"
+        icon.width: width
+        icon.height: height
         /*style: ButtonStyle{
             label: Image {
                 source: "./images/doublearrow.png";

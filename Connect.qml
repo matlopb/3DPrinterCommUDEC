@@ -122,7 +122,7 @@ ApplicationWindow {
     Button{
         id: send_instructions
 
-        width: 160;
+        width: 170;
         height: 30;
         enabled: connected
         anchors.right: start_printing.left
@@ -132,6 +132,8 @@ ApplicationWindow {
         text: qsTr("Enviar instrucciones")
         font.pixelSize: 14
         icon.source: "./images/send.png"
+        icon.height: height
+        icon.width: height
         display: Button.TextBesideIcon
         onClicked:{
             manager.send_instructions()
@@ -143,33 +145,18 @@ ApplicationWindow {
         id: start_printing
 
         width: 120;
-        height: 40;
+        height: 50;
         enabled: connected
         anchors.right: parent.right
         anchors.rightMargin: 25;
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 10
-        text: (is_printing) ? qsTr("Pausar \nimpresion") : qsTr("Iniciar \nimpresion")
+        anchors.bottomMargin: 5
+        text: (is_printing) ? qsTr("Pausar\nimpresion") : qsTr("Iniciar\nimpresion")
         font.pixelSize: 14
         icon.source: (is_printing) ? "./images/pause.png" : "./images/play.png"
+        icon.width: 30
+        icon.height: 30
         display: Button.TextBesideIcon
-        /*style: ButtonStyle{
-            label: Image
-            {
-                source: (is_printing) ? "./images/pause.png" : "./images/play.png";
-                fillMode: Image.PreserveAspectFit;
-                horizontalAlignment: Image.AlignLeft;
-            }
-        }*/
-        /*Text
-        {
-            text: (is_printing) ? qsTr("Pausar \nimpresion") : qsTr("Iniciar \nimpresion")
-            horizontalAlignment: Text.AlignHCenter
-            color: start_printing.enabled ? "black":"darkgrey"
-            anchors.right: parent.right
-            anchors.rightMargin: 10
-            anchors.verticalCenter: parent.verticalCenter
-        }*/
         onClicked: {
             is_printing = manager.switch_printing()
             monitoring_tab.item.set_progress_timer(is_printing)
@@ -180,7 +167,7 @@ ApplicationWindow {
         id: emergency_stop
 
         width: 150
-        height: 50
+        height: 45
         anchors.left: parent.left
         anchors.leftMargin: 25
         anchors.verticalCenter: start_printing.verticalCenter
@@ -326,29 +313,6 @@ ApplicationWindow {
         anchors.top: coreBar.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         currentIndex: coreBar.currentIndex
-
-        //anchors.horizontalCenter: parent.horizontalCenter
-        //anchors.top: parent.top
-
-        /*style: TabViewStyle {
-                frameOverlap: 1
-                tab: Rectangle {
-                    color: styleData.selected ? "ghostwhite" :"silver"
-                    border.color:  "steelblue"
-                    implicitWidth: (login_dialog.width-48)/3
-                    implicitHeight: 30
-                    radius: 2
-                    Text {
-                        id: text
-                        font.bold: true
-                        anchors.centerIn: parent
-                        text: styleData.title
-                        color: styleData.selected ? "black" : "black"
-                    }
-                }
-                frame: Rectangle { color: "steelblue" }
-            }*/
-
 
         Item {
             id: login_tab
@@ -507,22 +471,11 @@ ApplicationWindow {
                         Layout.preferredHeight: 30
                         enabled: false
                         Layout.alignment: Qt.AlignHCenter
-                        /*style: ButtonStyle{
-                            label: Image {
-                                source: "./images/connect.png";
-                                fillMode: Image.PreserveAspectFit;
-                                horizontalAlignment: Image.AlignLeft;
-                            }
-                        }*/
-                        Text
-                        {
-                            text: qsTr("Conectar")
-                            color: login_button.enabled ? "black":"darkgrey"
-                            anchors.right: parent.right
-                            anchors.rightMargin: 10
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-
+                        text: qsTr('Conectar')
+                        icon.source: "./images/connect.png"
+                        icon.width: 30
+                        icon.height: 30
+                        display: Button.TextBesideIcon
                         onClicked: {
                             plc_path = ip_field.text
                             plc_info = manager.plc_info(plc_path)
@@ -674,7 +627,7 @@ ApplicationWindow {
             Rectangle {
 
                 width: login_dialog.width - 50
-                height: login_dialog.height - 60
+                height: login_dialog.height - 80
                 border.width: 1
 
                 function load_tags(){
@@ -785,59 +738,32 @@ ApplicationWindow {
 
                     Image {
                         id: chart
-                        //width: parent.width -50
-                        //height: parent.height - 80
+                        width: parent.width -50
+                        height: parent.height - 80
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.top: parent.top
                         anchors.topMargin: 10
-                        source: "image://perflog/eventStatisticsPlot"
+                        source: "image://perflog/plot_one"
                     }
 
                     Timer{
                         id: image_timer
-                        interval: 3000
+                        interval: 1000
                         running: true
                         repeat: true
                         onTriggered:{
-                            manager.plot()
-                            reload()
-                            //chart.source = "image://perflog/eventStatisticsPlo"
-                            //chart.source = "image://perflog/eventStatisticsPlot"
-                            //console.log(chart.width, chart.height)
+                            manager.plot('plot_one')
+                            reload1()
+                            manager.plot('plot_two')
+                            reload2()
+                            console.log('done')
                         }
-                        function reload() { var t = chart.source; chart.source = ""; chart.source = t; }
+                        function reload1() { var t = chart.source; chart.source = ""; chart.source = t; }
+                        function reload2() { var t = chart2.source; chart2.source = ""; chart2.source = t; }
                     }
-
-                    /*ChartView {
-                        //id: chart
-                        x: 180
-                        y: 90
-                        width: parent.width
-                        height: parent.height - 60
-                        anchors.left: parent.left
-                        anchors.top: parent.top
-                        backgroundColor: "whitesmoke"
-                        plotAreaColor: "white"
-
-                        ValueAxis{
-                            id: axisY
-                            min: 0
-                            max: 100
-                        }
-                        DateTimeAxis{
-                            id: time_axis
-
-                            format: "hh:mm.ss"
-                            min: new Date(new Date().getFullYear(), 1, 1, new Date().getHours(), new Date().getMinutes(), new Date().getSeconds())
-                            max: new Date()
-                            tickCount: 4
-                        }
-
-                    }*/
-
                 }
                 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-                /*Rectangle{
+                Rectangle{
                     id: chart_rect2
 
                     border.width: 1
@@ -909,36 +835,17 @@ ApplicationWindow {
                         }
                     }
 
-
-
-                    ChartView {
+                    Image {
                         id: chart2
-                        x: 180
-                        y: 90
-                        width: parent.width
-                        height: parent.height - 60
-                        anchors.left: parent.left
+                        width: parent.width -50
+                        height: parent.height - 80
+                        anchors.horizontalCenter: parent.horizontalCenter
                         anchors.top: parent.top
-                        backgroundColor: "whitesmoke"
-                        plotAreaColor: "white"
-
-                        ValueAxis{
-                            id: axisY2
-                            min: 0
-                            max: 100
-                        }
-                        DateTimeAxis{
-                            id: time_axis2
-
-                            format: "hh:mm.ss"
-                            min: new Date(new Date().getFullYear(), 1, 1, new Date().getHours(), new Date().getMinutes(), new Date().getSeconds())
-                            max: new Date()
-                            tickCount: 4
-                        }
-
+                        anchors.topMargin: 10
+                        //source: "./images/2wayarrow.png"
+                        source: "image://perflog/plot_two"
                     }
-
-                }*/
+                }
 
                 Rectangle{
                     id: progress_status
@@ -992,23 +899,26 @@ ApplicationWindow {
                     }
                     ProgressBar {
                         id: process_progressBar
+                        height: 20
                         width: parent.width - 100
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottom: parent.bottom
                         anchors.bottomMargin: 20
+                        value: 0
+                        to: 1
                         background: Rectangle {
                                         anchors.fill: parent
                                         color: "white"
                                         border.width: 1
                                         border.color: 'black'
                         }
-                        contentItem: Rectangle {
+                        /*contentItem: Rectangle {
                                         anchors.left: parent.left
                                         anchors.verticalCenter: parent.verticalCenter
                                         height: parent.height - 4
                                         width: parent.width * (parent.value/parent.to)
                                         color: 'dodgerblue'
-                        }
+                        }*/
                     }
                     Timer{
                         id: progress_timer
@@ -1133,7 +1043,7 @@ ApplicationWindow {
 
             Rectangle {
                 width: login_dialog.width - 50
-                height: login_dialog.height - 60
+                height: login_dialog.height - 80
                 border.width: 1
 
                 function get_actual_position(){
@@ -1289,22 +1199,12 @@ ApplicationWindow {
                     anchors.horizontalCenter: control_title.horizontalCenter
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 10
-                    /*style: ButtonStyle{
-                        label: Image {
-                            source: "./images/move.png";
-                            fillMode: Image.PreserveAspectFit;
-                            horizontalAlignment: Image.AlignLeft;
-                        }
-                    }*/
-                    Text
-                    {
-                        text: qsTr("Realizar movimiento")
-                        anchors.right: parent.right
-                        anchors.rightMargin: 10
-                        anchors.verticalCenter: parent.verticalCenter
-                        font.bold: true
-                        font.pointSize: 14
-                    }
+                    text: qsTr("Realizar movimiento")
+                    font.pointSize: 14
+                    display: Button.TextBesideIcon
+                    icon.source: "./images/move.png"
+                    icon.height: height
+                    icon.width: height
                     onClicked: {
                         manager.move_to(eje_x.paramText, eje_y.paramText, -eje_z.paramText)
                     }
@@ -1343,22 +1243,13 @@ ApplicationWindow {
                             Layout.preferredWidth: 250
                             Layout.preferredHeight: 50
                             Layout.alignment: Qt.AlignHCenter
-                            /*style: ButtonStyle{
-                                label: Image {
-                                    source: "./images/home.png";
-                                    fillMode: Image.PreserveAspectFit;
-                                    horizontalAlignment: Image.AlignLeft;
-                                }
-                            }*/
-                            Text
-                            {
-                                text: qsTr("Volver al origen")
-                                anchors.right: parent.right
-                                anchors.rightMargin: 10
-                                anchors.verticalCenter: parent.verticalCenter
-                                font.bold: true
-                                font.pointSize: 14
-                            }
+                            text: qsTr("Volver al origen")
+                            font.pointSize: 14
+                            font.bold: true
+                            display: Button.TextBesideIcon
+                            icon.source: "./images/home.png"
+                            icon.height: height
+                            icon.width: height
                             onClicked: {
                                 manager.run_home()
                             }
@@ -1369,22 +1260,13 @@ ApplicationWindow {
                             Layout.preferredWidth: 250
                             Layout.preferredHeight: 50
                             Layout.alignment: Qt.AlignHCenter
-                            /*style: ButtonStyle{
-                                label: Image {
-                                    source: "./images/warning.png";
-                                    fillMode: Image.PreserveAspectFit;
-                                    horizontalAlignment: Image.AlignLeft;
-                                }
-                            }*/
-                            Text
-                            {
-                                text: qsTr("Detener impresion")
-                                anchors.right: parent.right
-                                anchors.rightMargin: 10
-                                anchors.verticalCenter: parent.verticalCenter
-                                font.bold: true
-                                font.pointSize: 14
-                            }
+                            text: qsTr("Detener impresion")
+                            font.pointSize: 14
+                            font.bold: true
+                            display: Button.TextBesideIcon
+                            icon.source: "./images/warning.png"
+                            icon.height: height
+                            icon.width: height
                             onClicked: {
                                 message.text = qsTr("¿Está seguro que desea detener la impresión? \n Se perderá todo el progreso hasta ahora")
                                 double_confirmation_window.visible = true

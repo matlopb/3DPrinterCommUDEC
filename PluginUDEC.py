@@ -9,6 +9,7 @@ from typing import List, cast
 from functools import reduce
 import random
 import time
+from datetime import datetime, timedelta
 
 import sys
 from pathlib import Path
@@ -69,19 +70,27 @@ class PluginUDEC(QObject, Extension):
         self.loading_is_open = False
         self.plc = LogixDriver('152.74.22.162/3', init__program_tags=False)
 
-    @pyqtSlot()
-    def plot(self):
+    @pyqtSlot(str)
+    def plot(self,name):
         self.imageProvider = matplt.MatplotlibImageProvider()
-        x = [random.randint(0,50) for i in [1,2,3,4,5]]
-        y = [random.randint(0,100) for i in [1,2,3,4,5]]
-        print(x,y)
+        y = [random.randint(0,100) for i in range(60)]
+        X = np.array([self.bias_time(datetime.now(), 0, 0, -i) for i in range(60)])
         gain = 1.4
-        figure = self.imageProvider.addFigure("eventStatisticsPlot", figsize=(6.4*gain,4.8*gain))
+        figure = self.imageProvider.addFigure(name, figsize=(6.4*gain,4.8*gain))
         ax = figure.add_subplot()
-        ax.grid(linewidth=10)
-        ax.set(aspect='auto', xlabel='Hora', ylabel='Valor', ylim=[0,100], xlim=[0,60])
-        ax.set_title("Visualización de variables", fontsize=10)
-        ax.plot(x,y, linewidth=10)
+        ax.grid(linewidth=2)
+        ax.set(aspect='auto', xlabel='Hora', ylabel='Valor', ylim=[0,100])
+        ax.set_xlabel('Hora', fontsize=30)
+        ax.set_ylabel('Valor', fontsize=30)
+        ax.set_title("Visualización de variables", fontsize=30)
+        ax.tick_params(axis='both', which='both', labelsize=15)
+        ax.plot(X,y, linewidth=3)
+
+    def bias_time(self, original_time, hr_bias, min_bias, sec_bias):
+        """Recieves a datetime-time object and modifies it with the given bias for hr, min and sec."""
+
+        new_time = original_time + timedelta (hours=hr_bias) + timedelta (minutes=min_bias) + timedelta (seconds=sec_bias)
+        return new_time
 
     @pyqtSlot(str)
     def select_material(self, selected_material):
@@ -227,7 +236,8 @@ class PluginUDEC(QObject, Extension):
 
     def show_connect(self):
         """Displays an error message with the given title and message"""
-        self.plot()
+        self.plot('plot_one')
+        self.plot('plot_two')
         self.create_view("Connect.qml")
         if self.connect_view is None:
             Logger.log("e", "Not creating Connect window since the QML component failed to be created.")
