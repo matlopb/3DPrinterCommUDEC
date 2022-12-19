@@ -3,8 +3,6 @@ import QtQml 2.0
 import QtQuick.Window 2.15
 //import QtCharts 2.4
 import QtQuick.Controls
-//import QtQuick.Controls 2.15
-//import QtQuick.Controls.Styles 1.4
 import QtQuick.Layouts //1.3
 
 
@@ -80,7 +78,7 @@ ApplicationWindow {
             frame.width = width - 50
 
             if (manager.look_for_gcode() == false){
-                login_tab.item.notify_gcode_status()
+                login_zone.notify_gcode_status()
             }
         }
     onWidthChanged: frame.width = width - 50
@@ -122,19 +120,32 @@ ApplicationWindow {
     Button{
         id: send_instructions
 
-        width: 170;
-        height: 30;
+        width: 140;
+        height: 50;
         enabled: connected
         anchors.right: start_printing.left
         anchors.rightMargin: 25;
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 10
-        text: qsTr("Enviar instrucciones")
-        font.pixelSize: 14
-        icon.source: "./images/send.png"
-        icon.height: height
-        icon.width: height
-        display: Button.TextBesideIcon
+        anchors.bottomMargin: 5
+        Text {
+            anchors.right: parent.right
+            anchors.rightMargin: 10
+            anchors.verticalCenter: parent.verticalCenter
+            text: qsTr("Enviar\ninstrucciones")
+            font.weight: Font.Medium
+            font.pixelSize: 14
+            opacity: enabled ? 1.0 : 0.4
+            horizontalAlignment: Text.AlignHCenter
+        }
+        Image {
+            source: "./images/send.png"
+            opacity: enabled ? 1 : 0.4
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            anchors.verticalCenter: parent.verticalCenter
+            height: 32
+            width: 32
+        }
         onClicked:{
             manager.send_instructions()
             manager.check_servos()
@@ -151,12 +162,25 @@ ApplicationWindow {
         anchors.rightMargin: 25;
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 5
-        text: (is_printing) ? qsTr("Pausar\nimpresion") : qsTr("Iniciar\nimpresion")
-        font.pixelSize: 14
-        icon.source: (is_printing) ? "./images/pause.png" : "./images/play.png"
-        icon.width: 30
-        icon.height: 30
-        display: Button.TextBesideIcon
+        Text {
+            anchors.right: parent.right
+            anchors.rightMargin: 10
+            anchors.verticalCenter: parent.verticalCenter
+            text: (is_printing) ? qsTr("Pausar\nimpresion") : qsTr("Iniciar\nimpresion")
+            font.weight: Font.Medium
+            font.pixelSize: 14
+            opacity: enabled ? 1.0 : 0.4
+            horizontalAlignment: Text.AlignHCenter
+        }
+        Image {
+            source: (is_printing) ? "./images/pause.png" : "./images/play.png"
+            opacity: enabled ? 1 : 0.4
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            anchors.verticalCenter: parent.verticalCenter
+            height: 32
+            width: 32
+        }
         onClicked: {
             is_printing = manager.switch_printing()
             monitoring_tab.item.set_progress_timer(is_printing)
@@ -166,54 +190,37 @@ ApplicationWindow {
     Button{
         id: emergency_stop
 
-        width: 150
-        height: 45
+        width: 110
+        height: 50
+        enabled: connected
         anchors.left: parent.left
         anchors.leftMargin: 25
         anchors.verticalCenter: start_printing.verticalCenter
-        text: qsTr("Detener \nmotores")
-        font.pixelSize: 14
-        font.bold: true
-        icon.source: "./images/emergency.png"
-        //display: Button.TextBesideIcon
         contentItem: Text {
-                text: emergency_stop.text
-                font.pixelSize: emergency_stop.font.pixelSize
-                font.bold: emergency_stop.font.bold
-                opacity: enabled ? 1.0 : 0.3
+                text: qsTr("Detener \nmotores")
+                font.weight: Font.Medium
+                font.pixelSize: 14
+                font.bold: false
+                opacity: enabled ? 1.0 : 0.4
                 horizontalAlignment: Text.AlignRight
-                color: emergency_stop.hovered ? "white" : "black"
+                color: (emergency_stop.hovered && enabled) ? "white" : "black"
         }
         background: Rectangle {
-                opacity: enabled ? 1 : 0.3
+                //opacity: enabled ? 1 : 0.7
                 border.color: "darkgrey"
-                color: emergency_stop.hovered ? Qt.lighter("red", 1.2) : 'whitesmoke'
+                color: (emergency_stop.hovered && enabled) ? Qt.lighter("red", 1.2) : 'whitesmoke'
                 border.width: 1
                 radius: 3
+                Image {
+                    source: "./images/emergency.png"
+                    opacity: enabled ? 1 : 0.4
+                    anchors.left: parent.left
+                    anchors.leftMargin: 10
+                    anchors.verticalCenter: parent.verticalCenter
+                    height: 32
+                    width: 32
+                }
         }
-        /*style: ButtonStyle{
-            label: Image {
-                source: "./images/emergency.png";
-                fillMode: Image.PreserveAspectFit;
-                horizontalAlignment: Image.AlignLeft;
-            }
-            background: Rectangle{
-                border.width: 1
-                border.color: "darkgrey"
-                radius: 3
-                color: emergency_stop.hovered ? Qt.lighter("red", 1.2) : Qt.darker("#EBEBEB", 1.1)
-            }
-        }*/
-        /*Text
-        {
-            text: qsTr("Detener \nmotores")
-            anchors.right: parent.right
-            anchors.rightMargin: 10
-            anchors.verticalCenter: parent.verticalCenter
-            font.bold: true
-            font.pointSize: 14
-            color: emergency_stop.hovered ? "white" : "black"
-        }*/
         onClicked: {
             message.text = qsTr("Está a punto de detener forzosamente los motores. \n ¿Está seguro que desea continuar?")
             is_emergency = true
@@ -258,6 +265,7 @@ ApplicationWindow {
                 anchors.bottom: buttons_row.top
                 anchors.bottomMargin: 20
                 anchors.horizontalCenter: buttons_row.horizontalCenter
+                color: 'black'
                 //text: qsTr("¿Está seguro que desea detener la impresión? \n Se perderá todo el progreso hasta ahora")
             }
 
@@ -271,7 +279,11 @@ ApplicationWindow {
 
                     Layout.preferredWidth: 100
                     Layout.preferredHeight: 30
-                    text: 'Detener'
+                    contentItem: Label {
+                        text: qsTr("Detener")
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignHCenter
+                    }
                     onClicked: {
                         if (is_emergency){manager.force_stop(); is_emergency = false; emergency_on.running = true}
                         else{manager.stop_printing()}
@@ -283,7 +295,11 @@ ApplicationWindow {
 
                     Layout.preferredWidth: 100
                     Layout.preferredHeight: 30
-                    text: 'Cancelar'
+                    contentItem: Label {
+                        text: qsTr("Cancelar")
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignHCenter
+                    }
                     onClicked: {double_confirmation_window.visible = false}
                 }
             }
@@ -296,15 +312,27 @@ ApplicationWindow {
         anchors.horizontalCenter: parent.horizontalCenter
         TabButton{
             height: 40
-            text: qsTr("Instrucciones y conexión")
+            contentItem: Label {
+                text: qsTr("Instrucciones y conexión")
+                verticalAlignment: Text.AlignVCenter
+                horizontalAlignment: Text.AlignHCenter
+            }
         }
         TabButton{
             height: 40
-            text: qsTr("Monitoreo de proceso")
+            contentItem: Label {
+                text: qsTr("Monitoreo de proceso")
+                verticalAlignment: Text.AlignVCenter
+                horizontalAlignment: Text.AlignHCenter
+            }
         }
         TabButton{
             height: 40
-            text: qsTr("Control y movimiento")
+            contentItem: Label {
+                text: qsTr("Control y movimiento")
+                verticalAlignment: Text.AlignVCenter
+                horizontalAlignment: Text.AlignHCenter
+            }
         }
     }
 
@@ -471,11 +499,23 @@ ApplicationWindow {
                         Layout.preferredHeight: 30
                         enabled: false
                         Layout.alignment: Qt.AlignHCenter
-                        text: qsTr('Conectar')
-                        icon.source: "./images/connect.png"
-                        icon.width: 30
-                        icon.height: 30
-                        display: Button.TextBesideIcon
+                        Text {
+                            text: qsTr('Conectar')
+                            color: generate_instructions.enabled ? "black":"darkgrey"
+                            anchors.right: parent.right
+                            anchors.rightMargin: 10
+                            anchors.verticalCenter: parent.verticalCenter
+                            font.pointSize: 12
+                        }
+                        Image {
+                            source: "./images/connect.png"
+                            opacity: enabled ? 1 : 0.4
+                            anchors.left: parent.left
+                            anchors.leftMargin: 10
+                            anchors.verticalCenter: parent.verticalCenter
+                            height: 16
+                            width: 16
+                        }
                         onClicked: {
                             plc_path = ip_field.text
                             plc_info = manager.plc_info(plc_path)
@@ -487,7 +527,6 @@ ApplicationWindow {
                                 monitoring_tab.enabled = true
                                 control_tab.enabled = true
                                 monitoring_tab.item.load_tags()
-                                monitoring_tab.item.set_progress_total()
                                 control_tab.item.get_actual_position()
                                 control_tab.item.get_gains()
                             }
@@ -587,20 +626,13 @@ ApplicationWindow {
                         Button{
                             id: generate_instructions
 
-                            width: parent.width - 100
+                            width: 250
                             height: 50
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.bottom: parent.bottom
                             anchors.bottomMargin: 10
-                            /*style: ButtonStyle{
-                                label: Image {
-                                    source: "./images/write.png";
-                                    fillMode: Image.PreserveAspectFit;
-                                    horizontalAlignment: Image.AlignLeft;
-                                }
-                            }*/
-                            Text
-                            {
+                            enabled: true
+                            Text {
                                 text: qsTr("Generar instrucciones")
                                 color: generate_instructions.enabled ? "black":"darkgrey"
                                 anchors.right: parent.right
@@ -608,6 +640,15 @@ ApplicationWindow {
                                 anchors.verticalCenter: parent.verticalCenter
                                 font.bold: true
                                 font.pointSize: 14
+                            }
+                            Image {
+                                source: "./images/write.png"
+                                opacity: enabled ? 1 : 0.4
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                height: 32
+                                width: 32
                             }
                             onClicked: {
                                 manager.generate_instructions_list(sb.paramText, sp.paramText, armLen.paramText,
@@ -645,7 +686,6 @@ ApplicationWindow {
                     tagbox2_3.combobox.model = tag_list
                     tagbox2_4.combobox.model = tag_list
                 }
-                function set_progress_total() {process_progressBar.to = 100}
                 function set_progress_timer(state) {progress_timer.running = state}
                 function stop_timer() {date_timer.running = false}
 
@@ -756,7 +796,6 @@ ApplicationWindow {
                             reload1()
                             manager.plot('plot_two')
                             reload2()
-                            console.log('done')
                         }
                         function reload1() { var t = chart.source; chart.source = ""; chart.source = t; }
                         function reload2() { var t = chart2.source; chart2.source = ""; chart2.source = t; }
@@ -900,25 +939,28 @@ ApplicationWindow {
                     ProgressBar {
                         id: process_progressBar
                         height: 20
-                        width: parent.width - 100
+                        width: 350//parent.width - 100
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottom: parent.bottom
                         anchors.bottomMargin: 20
-                        value: 0
-                        to: 1
+                        from: 0
+                        to: 100
                         background: Rectangle {
                                         anchors.fill: parent
                                         color: "white"
                                         border.width: 1
                                         border.color: 'black'
                         }
-                        /*contentItem: Rectangle {
-                                        anchors.left: parent.left
-                                        anchors.verticalCenter: parent.verticalCenter
+                        contentItem: Item {
+                            implicitWidth: 200
+                            implicitHeight: 4
+                            Rectangle {
+                                        id: content
                                         height: parent.height - 4
-                                        width: parent.width * (parent.value/parent.to)
+                                        width: process_progressBar.width * (process_progressBar.value/process_progressBar.to)
                                         color: 'dodgerblue'
-                        }*/
+                            }
+                        }
                     }
                     Timer{
                         id: progress_timer
@@ -1199,12 +1241,24 @@ ApplicationWindow {
                     anchors.horizontalCenter: control_title.horizontalCenter
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 10
-                    text: qsTr("Realizar movimiento")
-                    font.pointSize: 14
-                    display: Button.TextBesideIcon
-                    icon.source: "./images/move.png"
-                    icon.height: height
-                    icon.width: height
+                    Text {
+                        text: qsTr("Realizar movimiento")
+                        color: make_move.enabled ? "black":"darkgrey"
+                        anchors.right: parent.right
+                        anchors.rightMargin: 10
+                        anchors.verticalCenter: parent.verticalCenter
+                        font.pointSize: 14
+                        font.bold: true
+                    }
+                    Image {
+                        source: "./images/move.png"
+                        opacity: enabled ? 1 : 0.4
+                        anchors.left: parent.left
+                        anchors.leftMargin: 10
+                        anchors.verticalCenter: parent.verticalCenter
+                        height: 32
+                        width: 32
+                    }
                     onClicked: {
                         manager.move_to(eje_x.paramText, eje_y.paramText, -eje_z.paramText)
                     }
@@ -1243,13 +1297,24 @@ ApplicationWindow {
                             Layout.preferredWidth: 250
                             Layout.preferredHeight: 50
                             Layout.alignment: Qt.AlignHCenter
-                            text: qsTr("Volver al origen")
-                            font.pointSize: 14
-                            font.bold: true
-                            display: Button.TextBesideIcon
-                            icon.source: "./images/home.png"
-                            icon.height: height
-                            icon.width: height
+                            Text {
+                                text: qsTr("Volver al origen")
+                                color: move_home.enabled ? "black":"darkgrey"
+                                anchors.right: parent.right
+                                anchors.rightMargin: 30
+                                anchors.verticalCenter: parent.verticalCenter
+                                font.pointSize: 14
+                                font.bold: true
+                            }
+                            Image {
+                                source: "./images/home.png"
+                                opacity: enabled ? 1 : 0.4
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                height: 32
+                                width: 32
+                            }
                             onClicked: {
                                 manager.run_home()
                             }
@@ -1260,13 +1325,24 @@ ApplicationWindow {
                             Layout.preferredWidth: 250
                             Layout.preferredHeight: 50
                             Layout.alignment: Qt.AlignHCenter
-                            text: qsTr("Detener impresion")
-                            font.pointSize: 14
-                            font.bold: true
-                            display: Button.TextBesideIcon
-                            icon.source: "./images/warning.png"
-                            icon.height: height
-                            icon.width: height
+                            Text {
+                                text: qsTr("Detener impresion")
+                                color: stop_printing.enabled ? "black":"darkgrey"
+                                anchors.right: parent.right
+                                anchors.rightMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                font.pointSize: 14
+                                font.bold: true
+                            }
+                            Image {
+                                source: "./images/warning.png"
+                                opacity: enabled ? 1 : 0.4
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                height: 32
+                                width: 32
+                            }
                             onClicked: {
                                 message.text = qsTr("¿Está seguro que desea detener la impresión? \n Se perderá todo el progreso hasta ahora")
                                 double_confirmation_window.visible = true

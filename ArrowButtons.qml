@@ -14,13 +14,7 @@ Item {
         icon.source: "./images/arrow.png"
         icon.width: width
         icon.height: height
-        /*style: ButtonStyle{
-            label: Image {
-                source: "./images/arrow.png";
-                fillMode: Image.PreserveAspectFit;
-                horizontalAlignment: Image.AlignLeft;
-            }
-        }*/
+
         Text {
             id: amount1
             text: qsTr("10")
@@ -40,13 +34,7 @@ Item {
         icon.source: "./images/doublearrow.png"
         icon.width: width
         icon.height: height
-        /*style: ButtonStyle{
-            label: Image {
-                source: "./images/doublearrow.png";
-                fillMode: Image.PreserveAspectFit;
-                horizontalAlignment: Image.AlignLeft;
-            }
-        }*/
+
         Text {
             id: amount10
             text: qsTr("100")
