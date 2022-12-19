@@ -3,17 +3,17 @@ import QtQuick 2.15
 import QtQuick.Controls
 
 Item {
-    property alias lowButton: xplus1
-    property alias highButton: xplus10
+    property alias lowButton: xplus10
+    property alias highButton: xplus100
     property int rotation: 0
     Button{
-        id: xplus1
+        id: xplus10
 
         width: 40
         height: 80
         icon.source: "./images/arrow.png"
-        icon.width: width
-        icon.height: height
+        icon.width: 32
+        icon.height: 80
 
         Text {
             id: amount1
@@ -25,15 +25,15 @@ Item {
         }
     }
     Button{
-        id: xplus10
+        id: xplus100
 
         width: 66
         height: 80
-        anchors.left: xplus1.right
+        anchors.left: xplus10.right
         anchors.leftMargin: 10
         icon.source: "./images/doublearrow.png"
-        icon.width: width
-        icon.height: height
+        icon.width: 58
+        icon.height: 80
 
         Text {
             id: amount10
