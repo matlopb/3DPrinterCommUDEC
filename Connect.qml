@@ -638,7 +638,6 @@ ApplicationWindow {
                                 anchors.right: parent.right
                                 anchors.rightMargin: 10
                                 anchors.verticalCenter: parent.verticalCenter
-                                font.bold: true
                                 font.pointSize: 14
                             }
                             Image {
