@@ -1,9 +1,8 @@
 import QtQuick 2.15
 import QtQml 2.0
 import QtQuick.Window 2.15
-//import QtCharts 2.4
 import QtQuick.Controls
-import QtQuick.Layouts //1.3
+import QtQuick.Layouts
 
 
 ApplicationWindow {
@@ -25,6 +24,7 @@ ApplicationWindow {
     property bool is_printing: false
     property string ws_radio: ""
     property string ws_altura: ""
+    property var tb_counter: [0,0,0,0,0,0,0,0]
 
     width: {
         if (Qt.platform.os == "linux"){
@@ -94,14 +94,11 @@ ApplicationWindow {
         }
 
         function onProgressChanged(progress) {
-            //login_tab.item.change_progress(progress)
             login_zone.change_progress(progress)
-            //login_tab.item.set_instructions_status("Cálculo en proceso...")
             login_zone.set_instructions_status("Cálculo en proceso...")
         }
 
         function onProgressTotalChanged(total) {
-            //login_tab.item.change_bar_total(total)
             console.log(total)
             login_zone.change_bar_total(total)
         }
@@ -148,7 +145,7 @@ ApplicationWindow {
         }
         onClicked:{
             manager.send_instructions()
-            manager.check_servos()
+            //manager.check_servos()
         }
     }
 
@@ -183,7 +180,7 @@ ApplicationWindow {
         }
         onClicked: {
             is_printing = manager.switch_printing()
-            monitoring_tab.item.set_progress_timer(is_printing)
+            monitoring_zone.set_progress_timer(is_printing)
         }
     }    
 
@@ -487,7 +484,7 @@ ApplicationWindow {
 
                             width: 140
                             placeholderText: qsTr("e.g. 192.168.1.34/2");
-                            text: qsTr("152.74.22.162/3");
+                            text: qsTr("192.168.1.34/2");//qsTr("152.74.22.162/3");
                             validator: RegularExpressionValidator{ regularExpression: /^(([01]?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))\.){3}([01]?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))\/(([0-6]|3([0])|2([0-9]))\.)$/}
                         }
                     }
@@ -526,9 +523,9 @@ ApplicationWindow {
                             if (connected){
                                 monitoring_tab.enabled = true
                                 control_tab.enabled = true
-                                monitoring_tab.item.load_tags()
-                                control_tab.item.get_actual_position()
-                                control_tab.item.get_gains()
+                                monitoring_zone.load_tags()
+                                control_zone.get_actual_position()
+                                //control_zone.get_gains()
                             }
                         }
                     }
@@ -665,6 +662,7 @@ ApplicationWindow {
             id: monitoring_tab
 
             Rectangle {
+                id: monitoring_zone
 
                 width: login_dialog.width - 50
                 height: login_dialog.height - 80
@@ -727,8 +725,6 @@ ApplicationWindow {
                             combobox.onActivated: {
                                 date_timer.running = true
                                 tagbox1_active = true
-                                chart.series(0).name = combobox.currentText
-                                chart.series(0).clear()
                             }
                             combobox_input.onAccepted: {
                                 manager.write_value(combobox.currentText, combobox_input.text)
@@ -740,8 +736,6 @@ ApplicationWindow {
                             combobox.onActivated: {
                                 date_timer.running = true
                                 tagbox2_active = true
-                                chart.series(1).name = combobox.currentText
-                                chart.series(1).clear()
                             }
                             combobox_input.onAccepted: {
                                 manager.write_value(combobox.currentText, combobox_input.text)
@@ -753,8 +747,6 @@ ApplicationWindow {
                             combobox.onActivated: {
                                 date_timer.running = true
                                 tagbox3_active = true
-                                chart.series(2).name = combobox.currentText
-                                chart.series(2).clear()
                             }
                             combobox_input.onAccepted: {
                                 manager.write_value(combobox.currentText, combobox_input.text)
@@ -766,8 +758,6 @@ ApplicationWindow {
                             combobox.onActivated: {
                                 date_timer.running = true
                                 tagbox4_active = true
-                                chart.series(3).name = combobox.currentText
-                                chart.series(3).clear()
                             }
                             combobox_input.onAccepted: {
                                 manager.write_value(combobox.currentText, combobox_input.text)
@@ -788,7 +778,7 @@ ApplicationWindow {
                     Timer{
                         id: image_timer
                         interval: 1000
-                        running: true
+                        running: false
                         repeat: true
                         onTriggered:{
                             manager.plot('plot_one')
@@ -825,8 +815,6 @@ ApplicationWindow {
                             combobox.onActivated: {
                                 date_timer.running = true
                                 tagbox1_active = true
-                                chart2.series(0).name = combobox.currentText
-                                chart2.series(0).clear()
                             }
                             combobox_input.onAccepted: {
                                 manager.write_value(combobox.currentText, combobox_input.text)
@@ -838,8 +826,6 @@ ApplicationWindow {
                             combobox.onActivated: {
                                 date_timer.running = true
                                 tagbox2_active = true
-                                chart2.series(1).name = combobox.currentText
-                                chart2.series(1).clear()
                             }
                             combobox_input.onAccepted: {
                                 manager.write_value(combobox.currentText, combobox_input.text)
@@ -851,8 +837,6 @@ ApplicationWindow {
                             combobox.onActivated: {
                                 date_timer.running = true
                                 tagbox3_active = true
-                                chart2.series(2).name = combobox.currentText
-                                chart2.series(2).clear()
                             }
                             combobox_input.onAccepted: {
                                 manager.write_value(combobox.currentText, combobox_input.text)
@@ -864,8 +848,6 @@ ApplicationWindow {
                             combobox.onActivated: {
                                 date_timer.running = true
                                 tagbox4_active = true
-                                chart2.series(3).name = combobox.currentText
-                                chart2.series(3).clear()
                             }
                             combobox_input.onAccepted: {
                                 manager.write_value(combobox.currentText, combobox_input.text)
@@ -979,20 +961,7 @@ ApplicationWindow {
                             }
                         }
                     }
-                }                
-
-                /*Component.onCompleted: {
-                    console.log("Se ha iniciado QML\n")
-                    chart.createSeries(ChartView.SeriesTypeLine,"tag 1",time_axis,axisY)
-                    chart.createSeries(ChartView.SeriesTypeLine,"tag 2",time_axis,axisY)
-                    chart.createSeries(ChartView.SeriesTypeLine,"tag 3",time_axis,axisY)
-                    chart.createSeries(ChartView.SeriesTypeLine,"tag 4",time_axis,axisY)
-
-                    chart2.createSeries(ChartView.SeriesTypeLine,"tag 5",time_axis2,axisY2)
-                    chart2.createSeries(ChartView.SeriesTypeLine,"tag 6",time_axis2,axisY2)
-                    chart2.createSeries(ChartView.SeriesTypeLine,"tag 7",time_axis2,axisY2)
-                    chart2.createSeries(ChartView.SeriesTypeLine,"tag 8",time_axis2,axisY2)
-                }*/
+                }
 
                 Timer{
                     id: date_timer
@@ -1000,28 +969,47 @@ ApplicationWindow {
                     running: false
                     repeat: true
                     onTriggered: {
-                        var year = new Date().getFullYear()
-                        var hours = new Date().getHours()
-                        var minutes = new Date().getMinutes()
-                        var seconds = new Date().getSeconds()
-                        time_axis.min = new Date(year, 0, 0, hours, minutes - 1, seconds)
-                        time_axis.max = new Date(year, 0, 0, hours, minutes, seconds)
 
-                        time_axis2.min = new Date(year, 0, 0, hours, minutes - 1, seconds)
-                        time_axis2.max = new Date(year, 0, 0, hours, minutes, seconds)
+                        /*
+                        PSEUDO CODE
 
-                        var upper_tagboxes_info = {"tagbox_1" : [tagbox1_active, tagbox_1.combobox.currentText, 0], "tagbox_2" : [tagbox2_active, tagbox_2.combobox.currentText, 1], "tagbox_3" : [tagbox3_active, tagbox_3.combobox.currentText, 2], "tagbox_4" : [tagbox4_active, tagbox_4.combobox.currentText, 3]}
-                        var lower_tagboxes_info = {"tagbox2_1" : [tagbox1_active, tagbox2_1.combobox.currentText, 0], "tagbox2_2" : [tagbox2_active, tagbox2_2.combobox.currentText, 1], "tagbox2_3" : [tagbox3_active, tagbox2_3.combobox.currentText, 2], "tagbox2_4" : [tagbox4_active, tagbox2_4.combobox.currentText, 3]}
+                        p-function creates an array of 60 non-visible elements (60 seconds)
+
+                        every 1 seconds:
+                            get the tags in the tagboxes
+                            if no tags are selected:
+                                stop
+                            feed them to the python functions which make the plot
+                            *in python*:
+                                read value of tags
+                                append the read value to the end of array
+                                remove first element of array
+                                plot the values
+
+                        */
+
+                        var upper_tagboxes_info = {"tagbox_1" : [tagbox1_active, tagbox_1.combobox.currentText, 0, tb_counter[0]], "tagbox_2" : [tagbox2_active, tagbox_2.combobox.currentText, 1, tb_counter[1]], "tagbox_3" : [tagbox3_active, tagbox_3.combobox.currentText, 2, tb_counter[2]], "tagbox_4" : [tagbox4_active, tagbox_4.combobox.currentText, 3, tb_counter[3]]}
+                        var lower_tagboxes_info = {"tagbox2_1" : [tagbox1_active, tagbox2_1.combobox.currentText, 4, tb_counter[4]], "tagbox2_2" : [tagbox2_active, tagbox2_2.combobox.currentText, 5, tb_counter[5]], "tagbox2_3" : [tagbox3_active, tagbox2_3.combobox.currentText, 6, tb_counter[6]], "tagbox2_4" : [tagbox4_active, tagbox2_4.combobox.currentText, 7, tb_counter[7]]}
                         var upper_active_tagboxes = who_active(upper_tagboxes_info)
                         var lower_active_tagboxes = who_active(lower_tagboxes_info)
                         update_charts(upper_active_tagboxes, lower_active_tagboxes)
+
+                        reload1()
+                        reload2()
                     }
+
+                    function reload1() { var t = chart.source; chart.source = ""; chart.source = t; }
+                    function reload2() { var t = chart2.source; chart2.source = ""; chart2.source = t; }
 
                     function who_active(tagbox_dict){
                         var active_elements = {}
                         for (let tag in tagbox_dict){
                             if (tagbox_dict[tag][0] && tagbox_dict[tag][1] != "Seleccione un tag..."){
-                                active_elements[tag] = [tagbox_dict[tag][1], tagbox_dict[tag][2]]
+                                tb_counter[tagbox_dict[tag][2]]++
+                                active_elements[tag] = [tagbox_dict[tag][1], tagbox_dict[tag][2], tagbox_dict[tag][3]]
+                            }
+                            else{
+                                tagbox_dict[tag][3] = 0
                             }
                         }
                         return active_elements
@@ -1029,34 +1017,33 @@ ApplicationWindow {
 
                     function update_charts(upper_tag_dict, lower_tag_dict){
                         var tag_names = []
+                        var tag_counter = []
+                        var tag_spot = []
                         var upper_len = 0
                         var lower_len = 0
                         for (let upper_tag in upper_tag_dict){
                             tag_names.push(upper_tag_dict[upper_tag][0])
+                            tag_counter.push(upper_tag_dict[upper_tag][2])
+                            tag_spot.push(upper_tag_dict[upper_tag][1])
                             upper_len++
                         }
                         for (let lower_tag in lower_tag_dict){
                             tag_names.push(lower_tag_dict[lower_tag][0])
+                            tag_counter.push(lower_tag_dict[lower_tag][2])
+                            tag_spot.push(lower_tag_dict[lower_tag][1])
                             lower_len++
                         }
 
                         if (tag_names.length != 0){
-                            var tagbox_values = manager.update_series(tag_names, plc_path)
+                            console.log(tag_counter)
+                            var tagbox_values = manager.update_series(tag_names, tag_counter, tag_spot, upper_len, lower_len)
                             var counter = 0
                             for (let u_element in upper_tag_dict){
-                                chart.series(upper_tag_dict[u_element][1]).append(time_axis.max, tagbox_values[counter])
                                 fill_text(tagbox_values[counter], upper_tag_dict[u_element][1], "up")
-                                if (chart.series(upper_tag_dict[u_element][1]).count > 900) {
-                                    chart.series(upper_tag_dict[u_element][1]).remove(0)
-                                }
                                 counter++
                             }
                             for (let l_element in lower_tag_dict){
-                                chart2.series(lower_tag_dict[l_element][1]).append(time_axis.max, tagbox_values[counter])
                                 fill_text(tagbox_values[counter], lower_tag_dict[l_element][1], "down")
-                                if (chart2.series(lower_tag_dict[l_element][1]).count > 900) {
-                                    chart2.series(lower_tag_dict[l_element][1]).remove(0)
-                                }
                                 counter++
                             }
                         }
@@ -1083,12 +1070,14 @@ ApplicationWindow {
             id: control_tab
 
             Rectangle {
+                id: control_zone
+
                 width: login_dialog.width - 50
                 height: login_dialog.height - 80
                 border.width: 1
 
                 function get_actual_position(){
-                    var actual_position = manager.get_actual_position()
+                    //var actual_position = manager.get_actual_position()
                     eje_x.paramText = 0//actual_position[0]
                     eje_y.paramText = 0//actual_position[1]
                     eje_z.paramText = 0//actual_position[2]

@@ -68,23 +68,100 @@ class PluginUDEC(QObject, Extension):
         self.tag_dict = {}
         self.ip = ""
         self.loading_is_open = False
-        self.plc = LogixDriver('152.74.22.162/3', init__program_tags=False)
-
-    @pyqtSlot(str)
-    def plot(self,name):
+        self.plc = LogixDriver('192.168.1.34/2', init__program_tags=False)#'152.74.22.162/3', init__program_tags=False)
         self.imageProvider = matplt.MatplotlibImageProvider()
-        y = [random.randint(0,100) for i in range(60)]
-        X = np.array([self.bias_time(datetime.now(), 0, 0, -i) for i in range(60)])
+        self.plot_value_arrays = [[],[],[],[],[],[],[],[]]
+
+    def plot(self, name, value_arrays, counter):
+        #self.imageProvider = matplt.MatplotlibImageProvider()
         gain = 1.4
         figure = self.imageProvider.addFigure(name, figsize=(6.4*gain,4.8*gain))
         ax = figure.add_subplot()
         ax.grid(linewidth=2)
-        ax.set(aspect='auto', xlabel='Hora', ylabel='Valor', ylim=[0,100])
+        ax.set(aspect='auto', ylim=[0,100], xlim=[self.bias_time(datetime.now(), 0, -1, 0), datetime.now()])
         ax.set_xlabel('Hora', fontsize=30)
         ax.set_ylabel('Valor', fontsize=30)
         ax.set_title("Visualización de variables", fontsize=30)
         ax.tick_params(axis='both', which='both', labelsize=15)
-        ax.plot(X,y, linewidth=3)
+
+        #print (name, value_arrays, counter)
+
+        for tag in range(len(value_arrays)):
+            #print('tag is:', tag)
+            #print('counter[tag] is:', counter[tag])
+            if counter[tag] < 59:
+                X = np.array([self.bias_time(datetime.now(), 0, 0, -counter[tag] + i) for i in range(1+counter[tag])])
+            else:
+                X = np.array([self.bias_time(datetime.now(), 0, 0, -60 + i) for i in range(60)])
+            Y = np.array(value_arrays[tag])#np.array([value_arrays[tag,-seconds_passed - 1] for seconds_passed in range(counter[tag])])
+            #print ('x is:',X,'y is:', Y)#, value_arrays[tag,-counter[tag]], -counter[tag]-1)
+            ax.plot(X,Y, linewidth=3)
+
+    def update_plots(self, values_list, tag_counters, tag_spot, upper_len, lower_len):
+        # Grab values and put them in independant arrays. Separate arrays between upper and lower plot. Call self.plot to create the figure assossiated with the values.
+
+        values = self.get_value_arrays(values_list, tag_spot)
+        upper_value_arrays = []
+        lower_value_arrays = []
+        upper_counter = []
+        lower_counter = []
+        #print('values is:', values)
+        for i in range(upper_len):
+            upper_value_arrays.append(values[i])
+            # upper_value_arrays[i,59] = values_list[i]
+            upper_counter.append(tag_counters[i])
+        for i in range(lower_len):
+            lower_value_arrays.append(values[i + upper_len])
+            # lower_value_arrays[i,59] = values_list[i + upper_len]
+            lower_counter.append(tag_counters[i])
+        #print('upper array is:', upper_value_arrays, 'upper counter is:',upper_counter)
+        self.plot('plot_one', upper_value_arrays, upper_counter)
+        return
+
+    def get_value_arrays(self, values, tag_spot):
+
+        _values = []
+        for i in range(len(values)):
+            self.plot_value_arrays[tag_spot[i]].append(values[tag_spot[i]])
+            if len(self.plot_value_arrays[tag_spot[i]]) > 60:
+                self.plot_value_arrays[tag_spot[i]].pop(0)
+            _values.append(self.plot_value_arrays[tag_spot[i]])
+        for element in self.plot_value_arrays:
+            #print('array is:',self.plot_value_arrays, 'element is:',element, 'index is:',self.plot_value_arrays.index(element),'tag_spot is:', tag_spot,self.plot_value_arrays.index(element) not in tag_spot)
+            if self.plot_value_arrays.index(element) not in tag_spot:
+                element.clear()
+        #print(_values)
+        return _values
+
+
+    @pyqtSlot(list, list, list,  int, int, result=list)
+    def update_series(self, tag_list, tag_counters, tag_spot, upper_len, lower_len) -> List[float]:
+        """Reads the values of the tags in tag_list from the device associated with
+        the given IP address"""
+
+        try:
+            tag_names = self.extract_names(tag_list)
+            n_tags = len(tag_names)
+            #print(self.plc.connected)
+            if not self.plc.connected:
+                self.plc.open()
+            tag_read = self.plc.read(*tag_names)
+            values = self.extract_values(tag_read, n_tags)
+            self.saved_values = values
+            if self.loading_is_open:
+                self.connection_achieved.emit()
+                self.loading_is_open = False
+        except:
+            if not self.loading_is_open:
+                self.set_message_params('r', 'Se produjo un error',
+                                        'Se ha perdido la conexion con la impresora. '
+                                        '\nReconectando...')
+                self.progress_end.emit()
+            self.loading_is_open = True
+            values = self.saved_values
+        #print(values, tag_counters, tag_spot, upper_len, lower_len)
+        self.update_plots(values, tag_counters, tag_spot, upper_len, lower_len)
+        return values
 
     def bias_time(self, original_time, hr_bias, min_bias, sec_bias):
         """Recieves a datetime-time object and modifies it with the given bias for hr, min and sec."""
@@ -92,12 +169,17 @@ class PluginUDEC(QObject, Extension):
         new_time = original_time + timedelta (hours=hr_bias) + timedelta (minutes=min_bias) + timedelta (seconds=sec_bias)
         return new_time
 
-    @pyqtSlot(str)
-    def select_material(self, selected_material):
-        materials = ["hormigon", "pasta", "yeso", "asfalto"]
-        materials.remove(selected_material)
-        with LogixDriver(self.ip, init__program_tags=True) as plc:
-            plc.write(('Program:MainProgram.'+materials[0], 0), ('Program:MainProgram.'+materials[1], 0), ('Program:MainProgram.'+materials[2], 0), ('Program:MainProgram.'+selected_material, 1))
+    def shift_elements(self, arr, num, fill_value):
+        result = np.empty_like(arr)
+        if num > 0:
+            result[:num] = fill_value
+            result[num:] = arr[:-num]
+        elif num < 0:
+            result[num:] = fill_value
+            result[:num] = arr[-num:]
+        else:
+            result[:] = arr
+        return result
 
     @pyqtSlot(str, result=list)
     def plc_tag_list(self, ip) -> List[str]:
@@ -200,34 +282,7 @@ class PluginUDEC(QObject, Extension):
             elif tag_value is False:
                 tag_value = 0
             values.append(tag_value)
-        return values
-
-    @pyqtSlot(list, str, result=list)
-    def update_series(self, tag_list, ip) -> List[float]:
-        """Reads the values of the tags in tag_list from the device associated with
-        the given IP address"""
-
-        try:
-            tag_names = self.extract_names(tag_list)
-            n_tags = len(tag_names)
-            print(self.plc.connected)
-            if not self.plc.connected:
-                self.plc.open()
-            tag_read = self.plc.read(*tag_names)
-            values = self.extract_values(tag_read, n_tags)
-            self.saved_values = values
-            if self.loading_is_open:
-                self.connection_achieved.emit()
-                self.loading_is_open = False
-        except:
-            if not self.loading_is_open:
-                self.set_message_params('r', 'Se produjo un error',
-                                        'Se ha perdido la conexion con la impresora. '
-                                        '\nReconectando...')
-                self.progress_end.emit()
-            self.loading_is_open = True
-            values = self.saved_values
-        return values
+        return values    
 
     @pyqtSlot(str)
     def save_value(self, ip):
@@ -236,8 +291,8 @@ class PluginUDEC(QObject, Extension):
 
     def show_connect(self):
         """Displays an error message with the given title and message"""
-        self.plot('plot_one')
-        self.plot('plot_two')
+        #self.plot('plot_one')
+        #self.plot('plot_two')
         self.create_view("Connect.qml")
         if self.connect_view is None:
             Logger.log("e", "Not creating Connect window since the QML component failed to be created.")
