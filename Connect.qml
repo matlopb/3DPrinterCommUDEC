@@ -483,8 +483,8 @@ ApplicationWindow {
                             id: ip_field
 
                             width: 140
-                            placeholderText: qsTr("e.g. 192.168.1.34/2");
-                            text: qsTr("192.168.1.34/2");//qsTr("152.74.22.162/3");
+                            placeholderText: qsTr("e.g. 192.168.0.15/2");
+                            text: qsTr("192.168.0.15/2");//qsTr("152.74.22.162/3");
                             validator: RegularExpressionValidator{ regularExpression: /^(([01]?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))\.){3}([01]?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))\/(([0-6]|3([0])|2([0-9]))\.)$/}
                         }
                     }
@@ -723,6 +723,8 @@ ApplicationWindow {
                             id: tagbox_1
 
                             combobox.onActivated: {
+                                manager.clear_series(0)
+                                tb_counter[0] = 0
                                 date_timer.running = true
                                 tagbox1_active = true
                             }
@@ -734,6 +736,8 @@ ApplicationWindow {
                             id: tagbox_2
 
                             combobox.onActivated: {
+                                tb_counter[1] = 0
+                                manager.clear_series(1)
                                 date_timer.running = true
                                 tagbox2_active = true
                             }
@@ -745,6 +749,8 @@ ApplicationWindow {
                             id: tagbox_3
 
                             combobox.onActivated: {
+                                tb_counter[2] = 0
+                                manager.clear_series(2)
                                 date_timer.running = true
                                 tagbox3_active = true
                             }
@@ -756,6 +762,8 @@ ApplicationWindow {
                             id: tagbox_4
 
                             combobox.onActivated: {
+                                tb_counter[3] = 0
+                                manager.clear_series(3)
                                 date_timer.running = true
                                 tagbox4_active = true
                             }
@@ -773,21 +781,6 @@ ApplicationWindow {
                         anchors.top: parent.top
                         anchors.topMargin: 10
                         source: "image://perflog/plot_one"
-                    }
-
-                    Timer{
-                        id: image_timer
-                        interval: 1000
-                        running: false
-                        repeat: true
-                        onTriggered:{
-                            manager.plot('plot_one')
-                            reload1()
-                            manager.plot('plot_two')
-                            reload2()
-                        }
-                        function reload1() { var t = chart.source; chart.source = ""; chart.source = t; }
-                        function reload2() { var t = chart2.source; chart2.source = ""; chart2.source = t; }
                     }
                 }
                 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -813,6 +806,8 @@ ApplicationWindow {
                             id: tagbox2_1
 
                             combobox.onActivated: {
+                                tb_counter[4] = 0
+                                manager.clear_series(4)
                                 date_timer.running = true
                                 tagbox1_active = true
                             }
@@ -824,6 +819,8 @@ ApplicationWindow {
                             id: tagbox2_2
 
                             combobox.onActivated: {
+                                tb_counter[5] = 0
+                                manager.clear_series(5)
                                 date_timer.running = true
                                 tagbox2_active = true
                             }
@@ -835,6 +832,8 @@ ApplicationWindow {
                             id: tagbox2_3
 
                             combobox.onActivated: {
+                                tb_counter[6] = 0
+                                manager.clear_series(6)
                                 date_timer.running = true
                                 tagbox3_active = true
                             }
@@ -846,6 +845,8 @@ ApplicationWindow {
                             id: tagbox2_4
 
                             combobox.onActivated: {
+                                tb_counter[7] = 0
+                                manager.clear_series(7)
                                 date_timer.running = true
                                 tagbox4_active = true
                             }
@@ -862,7 +863,6 @@ ApplicationWindow {
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.top: parent.top
                         anchors.topMargin: 10
-                        //source: "./images/2wayarrow.png"
                         source: "image://perflog/plot_two"
                     }
                 }
@@ -970,24 +970,6 @@ ApplicationWindow {
                     repeat: true
                     onTriggered: {
 
-                        /*
-                        PSEUDO CODE
-
-                        p-function creates an array of 60 non-visible elements (60 seconds)
-
-                        every 1 seconds:
-                            get the tags in the tagboxes
-                            if no tags are selected:
-                                stop
-                            feed them to the python functions which make the plot
-                            *in python*:
-                                read value of tags
-                                append the read value to the end of array
-                                remove first element of array
-                                plot the values
-
-                        */
-
                         var upper_tagboxes_info = {"tagbox_1" : [tagbox1_active, tagbox_1.combobox.currentText, 0, tb_counter[0]], "tagbox_2" : [tagbox2_active, tagbox_2.combobox.currentText, 1, tb_counter[1]], "tagbox_3" : [tagbox3_active, tagbox_3.combobox.currentText, 2, tb_counter[2]], "tagbox_4" : [tagbox4_active, tagbox_4.combobox.currentText, 3, tb_counter[3]]}
                         var lower_tagboxes_info = {"tagbox2_1" : [tagbox1_active, tagbox2_1.combobox.currentText, 4, tb_counter[4]], "tagbox2_2" : [tagbox2_active, tagbox2_2.combobox.currentText, 5, tb_counter[5]], "tagbox2_3" : [tagbox3_active, tagbox2_3.combobox.currentText, 6, tb_counter[6]], "tagbox2_4" : [tagbox4_active, tagbox2_4.combobox.currentText, 7, tb_counter[7]]}
                         var upper_active_tagboxes = who_active(upper_tagboxes_info)
@@ -1009,7 +991,7 @@ ApplicationWindow {
                                 active_elements[tag] = [tagbox_dict[tag][1], tagbox_dict[tag][2], tagbox_dict[tag][3]]
                             }
                             else{
-                                tagbox_dict[tag][3] = 0
+                                tb_counter[tagbox_dict[tag][2]] = 0
                             }
                         }
                         return active_elements
@@ -1035,7 +1017,6 @@ ApplicationWindow {
                         }
 
                         if (tag_names.length != 0){
-                            console.log(tag_counter)
                             var tagbox_values = manager.update_series(tag_names, tag_counter, tag_spot, upper_len, lower_len)
                             var counter = 0
                             for (let u_element in upper_tag_dict){
@@ -1047,6 +1028,9 @@ ApplicationWindow {
                                 counter++
                             }
                         }
+                        else{
+                            manager.clear_all_arrays()
+                        }
                     }
 
                     function fill_text(value, tagbox_n, side){
@@ -1056,7 +1040,7 @@ ApplicationWindow {
                             upper_input_boxes[tagbox_n.toString()].placeholderText = value
                         }
                         else if(side=="down"){
-                            lower_input_boxes[tagbox_n.toString()].placeholderText = value
+                            //lower_input_boxes[tagbox_n.toString()].placeholderText = 'value'
                         }
                     }
 
