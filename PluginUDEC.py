@@ -68,7 +68,7 @@ class PluginUDEC(QObject, Extension):
         self.tag_dict = {}
         self.ip = ""
         self.loading_is_open = False
-        self.plc = LogixDriver('192.168.0.15/2', init__program_tags=False)#'152.74.22.162/3', init__program_tags=False)
+        self.plc = LogixDriver('192.168.1.18/2', init__program_tags=False)#'152.74.22.162/3', init__program_tags=False)
         self.imageProvider = matplt.MatplotlibImageProvider()
         self.plot_value_arrays = [[],[],[],[],[],[],[],[]]
 
@@ -84,19 +84,13 @@ class PluginUDEC(QObject, Extension):
         ax.set_title("Visualización de variables", fontsize=30)
         ax.tick_params(axis='both', which='both', labelsize=15)
 
-        #print (name, value_arrays, counter)
-
         for tag in range(len(value_arrays)):
-            #print('tag is:', tag)
-            #print('counter[tag] is:', counter[tag])
             if counter[tag] < 59:
                 X = np.array([self.bias_time(datetime.now(), 0, 0, -counter[tag] + i) for i in range(1+counter[tag])])
             else:
                 X = np.array([self.bias_time(datetime.now(), 0, 0, -60 + i) for i in range(60)])
-            Y = np.array(value_arrays[tag])#np.array([value_arrays[tag,-seconds_passed - 1] for seconds_passed in range(counter[tag])])
-            #print ('x is:',X,'y is:', Y)#, value_arrays[tag,-counter[tag]], -counter[tag]-1)
+            Y = np.array(value_arrays[tag])
             ax.plot(X,Y, linewidth=3)
-            #print('Se creo una linea en el grafico')
 
     def update_plots(self, values_list, tag_counters, tag_spot, upper_len, lower_len):
         # Grab values and put them in independant arrays. Separate arrays between upper and lower plot. Call self.plot to create the figure assossiated with the values.
@@ -106,16 +100,12 @@ class PluginUDEC(QObject, Extension):
         lower_value_arrays = []
         upper_counter = []
         lower_counter = []
-        #print('values is:', values)
         for i in range(upper_len):
             upper_value_arrays.append(values[i])
-            # upper_value_arrays[i,59] = values_list[i]
             upper_counter.append(tag_counters[i])
         for i in range(lower_len):
             lower_value_arrays.append(values[i + upper_len])
-            # lower_value_arrays[i,59] = values_list[i + upper_len]
             lower_counter.append(tag_counters[i + upper_len])
-        #print('upper array is:', upper_value_arrays, 'upper counter is:',upper_counter)
         self.plot('plot_one', upper_value_arrays, upper_counter)
         self.plot('plot_two', lower_value_arrays, lower_counter)
         return
@@ -129,12 +119,8 @@ class PluginUDEC(QObject, Extension):
                 self.plot_value_arrays[tag_spot[i]].pop(0)
             _values.append(self.plot_value_arrays[tag_spot[i]])
         for element in self.plot_value_arrays:
-            #print('array is:',self.plot_value_arrays, 'element is:',element, 'index is:',self.plot_value_arrays.index(element),'tag_spot is:', tag_spot,self.plot_value_arrays.index(element) not in tag_spot)
             if self.plot_value_arrays.index(element) not in tag_spot:
-                #print('element no esta dentro de los tagboxes. tag_spot es:', tag_spot)
                 element.clear()
-                #print('element fue limpiado:', element)
-        #print(_values)
         return _values
 
     @pyqtSlot(list, list, list,  int, int, result=list)
@@ -142,11 +128,9 @@ class PluginUDEC(QObject, Extension):
         """Reads the values of the tags in tag_list from the device associated with
         the given IP address"""
 
-        #print(tag_list, tag_counters, tag_spot, upper_len, lower_len)
         try:
             tag_names = self.extract_names(tag_list)
             n_tags = len(tag_names)
-            #print(self.plc.connected)
             if not self.plc.connected:
                 self.plc.open()
             tag_read = self.plc.read(*tag_names)
@@ -163,7 +147,6 @@ class PluginUDEC(QObject, Extension):
                 self.progress_end.emit()
             self.loading_is_open = True            
             values = self.saved_values
-        #print(values, tag_counters, tag_spot, upper_len, lower_len)
         self.update_plots(values, tag_counters, tag_spot, upper_len, lower_len)
         return values
 
@@ -188,15 +171,12 @@ class PluginUDEC(QObject, Extension):
     @pyqtSlot()
     def clear_all_arrays(self):
 
-        print('se entro a la funcion clear all arrays')
         for element in self.plot_value_arrays:
-            #print(self.plot_value_arrays)
             element.clear()
 
     @pyqtSlot(int)
     def clear_series(self, index):
 
-        print('se entro a la funcion clear series')
         self.plot_value_arrays[index].clear()
 
     @pyqtSlot(str, result=list)

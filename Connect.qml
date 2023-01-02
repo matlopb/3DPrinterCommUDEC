@@ -484,7 +484,7 @@ ApplicationWindow {
 
                             width: 140
                             placeholderText: qsTr("e.g. 192.168.0.15/2");
-                            text: qsTr("192.168.0.15/2");//qsTr("152.74.22.162/3");
+                            text: qsTr("192.168.1.18/2");//qsTr("152.74.22.162/3");
                             validator: RegularExpressionValidator{ regularExpression: /^(([01]?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))\.){3}([01]?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))\/(([0-6]|3([0])|2([0-9]))\.)$/}
                         }
                     }
@@ -1035,12 +1035,12 @@ ApplicationWindow {
 
                     function fill_text(value, tagbox_n, side){
                         var upper_input_boxes = {"0":tagbox_1.combobox_input, "1":tagbox_2.combobox_input, "2":tagbox_3.combobox_input, "3":tagbox_4.combobox_input}
-                        var lower_input_boxes = {"0":tagbox2_1.combobox_input, "1":tagbox2_2.combobox_input, "2":tagbox2_3.combobox_input, "3":tagbox2_4.combobox_input}
+                        var lower_input_boxes = {"4":tagbox2_1.combobox_input, "5":tagbox2_2.combobox_input, "6":tagbox2_3.combobox_input, "7":tagbox2_4.combobox_input}
                         if (side=="up"){
                             upper_input_boxes[tagbox_n.toString()].placeholderText = value
                         }
-                        else if(side=="down"){
-                            //lower_input_boxes[tagbox_n.toString()].placeholderText = 'value'
+                        else if(side=="down"){                            
+                            lower_input_boxes[tagbox_n.toString()].placeholderText = value
                         }
                     }
 
