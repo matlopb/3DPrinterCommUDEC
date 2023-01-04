@@ -69,11 +69,10 @@ class PluginUDEC(QObject, Extension):
         self.ip = ""
         self.loading_is_open = False
         self.plc = LogixDriver('192.168.1.18/2', init__program_tags=False)#'152.74.22.162/3', init__program_tags=False)
-        self.imageProvider = matplt.MatplotlibImageProvider()
         self.plot_value_arrays = [[],[],[],[],[],[],[],[]]
 
     def plot(self, name, value_arrays, counter):
-        #self.imageProvider = matplt.MatplotlibImageProvider()
+        self.imageProvider = matplt.MatplotlibImageProvider()
         gain = 1.4
         figure = self.imageProvider.addFigure(name, figsize=(6.4*gain,4.8*gain))
         ax = figure.add_subplot()
