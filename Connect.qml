@@ -34,7 +34,7 @@ ApplicationWindow {
             1100 * screenScaleFactor
         }
         else if (Qt.platform.os == "osx"){
-            900 * screenScaleFactor
+            1100 * screenScaleFactor
         }
     }
     height: {
@@ -67,7 +67,7 @@ ApplicationWindow {
             1100 * screenScaleFactor
         }
         else if (Qt.platform.os == "osx"){
-            900 * screenScaleFactor
+            1100 * screenScaleFactor
         }
     }    
 
