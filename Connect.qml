@@ -952,7 +952,7 @@ ApplicationWindow {
                     ProgressBar {
                         id: process_progressBar
                         height: 20
-                        width: 350//parent.width - 100
+                        width: 350
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottom: parent.bottom
                         anchors.bottomMargin: 20
@@ -969,7 +969,7 @@ ApplicationWindow {
                             implicitHeight: 4
                             Rectangle {
                                         id: content
-                                        height: parent.height - 4
+                                        height: parent.height
                                         width: process_progressBar.width * (process_progressBar.value/process_progressBar.to)
                                         color: 'dodgerblue'
                             }
