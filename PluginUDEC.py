@@ -68,8 +68,41 @@ class PluginUDEC(QObject, Extension):
         self.tag_dict = {}
         self.ip = ""
         self.loading_is_open = False
-        self.plc = LogixDriver('192.168.1.18/2', init__program_tags=False)#'152.74.22.162/3', init__program_tags=False)
+        self.plc = LogixDriver('152.74.22.162/3', init__program_tags=False)
         self.plot_value_arrays = [[],[],[],[],[],[],[],[]]
+        self.figure_array = [[],[],[]]
+
+    def figure_plot(self, name, values):
+        """Recieves a list of 3 arrays (x,y,z) to plot on 3 dimensions. Stores the image with the given name."""
+
+        gain = 1.4
+        figure = self.imageProvider.addFigure(name, figsize=(6.4*gain,4.8*gain))
+        ax = figure.add_subplot(projection='3d')
+        ax.grid(linewidth=2)
+        ax.set(aspect='auto')
+        ax.set_xlabel('X', fontsize=30)
+        ax.set_ylabel('Y', fontsize=30)
+        ax.set_zlabel('Z', fontsize=30)
+        ax.set_xlim(-225,225)
+        ax.set_ylim(-225,225)
+        ax.set_zlim(0,505)
+        ax.set_title("Figura", fontsize=30)
+        ax.view_init(elev=20., azim=-35, roll=0)
+
+        ax.plot(np.array(values[0]),np.array(values[1]),np.array(values[2]))
+
+    @pyqtSlot()
+    def get_figure_progress(self):
+
+        if not self.plc.connected:
+            self.plc.open()
+        x_value = self.plc.read('Program:MainProgram.X').value
+        y_value = self.plc.read('Program:MainProgram.Y').value
+        z_value = self.plc.read('Program:MainProgram.Z').value + 505
+        self.figure_array[0].append(x_value)
+        self.figure_array[1].append(y_value)
+        self.figure_array[2].append(z_value)
+        self.figure_plot('figure',self.figure_array)
 
     def plot(self, name, value_arrays, counter):
         self.imageProvider = matplt.MatplotlibImageProvider()
@@ -89,7 +122,7 @@ class PluginUDEC(QObject, Extension):
             else:
                 X = np.array([self.bias_time(datetime.now(), 0, 0, -60 + i) for i in range(60)])
             Y = np.array(value_arrays[tag])
-            ax.plot(X,Y, linewidth=3)
+            ax.plot(X,Y, linewidth=3)    
 
     def update_plots(self, values_list, tag_counters, tag_spot, upper_len, lower_len):
         # Grab values and put them in independant arrays. Separate arrays between upper and lower plot. Call self.plot to create the figure assossiated with the values.
@@ -288,8 +321,9 @@ class PluginUDEC(QObject, Extension):
 
     def show_connect(self):
         """Displays an error message with the given title and message"""
-        #self.plot('plot_one')
-        #self.plot('plot_two')
+        self.plot('plot_one',[],0)
+        self.plot('plot_two',[],0)
+        self.figure_plot('figure', [[],[],[]])
         self.create_view("Connect.qml")
         if self.connect_view is None:
             Logger.log("e", "Not creating Connect window since the QML component failed to be created.")

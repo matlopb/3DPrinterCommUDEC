@@ -484,7 +484,7 @@ ApplicationWindow {
 
                             width: 140
                             placeholderText: qsTr("e.g. 192.168.0.15/2");
-                            text: qsTr("192.168.1.18/2");//qsTr("152.74.22.162/3");
+                            text: qsTr("152.74.22.162/3");
                             validator: RegularExpressionValidator{ regularExpression: /^(([01]?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))\.){3}([01]?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))\/(([0-6]|3([0])|2([0-9]))\.)$/}
                         }
                     }
@@ -864,6 +864,38 @@ ApplicationWindow {
                         anchors.top: parent.top
                         anchors.topMargin: 10
                         source: "image://perflog/plot_two"
+                    }
+                }
+
+                Rectangle{
+                    id: figure_plot_rect
+
+                    anchors.top: tab_title.bottom
+                    anchors.bottom: progress_status.top
+                    anchors.right: parent.right
+                    anchors.left: chart_rect1.right
+                    color:"whitesmoke"
+                    border.width: 1
+
+                    Image {
+                        id: figure_plot
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.right: parent.right
+                        anchors.left: parent.left
+                        anchors.margins: 3
+                        source: "image://perflog/figure"
+                    }
+                    Timer{
+                        id: test_timer
+                        interval: 500
+                        running: is_printing
+                        repeat: true
+                        onTriggered: {
+                            manager.get_figure_progress()
+                            reload3()
+                        }
+                        function reload3() { var t = figure_plot.source; figure_plot.source = ""; figure_plot.source = t; }
                     }
                 }
 
