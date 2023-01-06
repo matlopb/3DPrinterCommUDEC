@@ -689,7 +689,7 @@ ApplicationWindow {
                 Text{
                     id: tab_title
 
-                    text: "Monitoreo de variables"
+                    text: "Monitoreo de Proceso"
                     z: 100
                     font.bold: true;
                     font.pointSize: 16;
@@ -872,8 +872,9 @@ ApplicationWindow {
 
                     anchors.top: tab_title.bottom
                     anchors.bottom: progress_status.top
-                    anchors.right: parent.right
-                    anchors.left: chart_rect1.right
+                    anchors.bottomMargin: 10
+                    anchors.right: progress_status.right
+                    anchors.left: progress_status.left
                     color:"whitesmoke"
                     border.width: 1
 
@@ -887,7 +888,7 @@ ApplicationWindow {
                         source: "image://perflog/figure"
                     }
                     Timer{
-                        id: test_timer
+                        id: figure_timer
                         interval: 500
                         running: is_printing
                         repeat: true
@@ -952,7 +953,7 @@ ApplicationWindow {
                     ProgressBar {
                         id: process_progressBar
                         height: 20
-                        width: 350//parent.width - 100
+                        width: 350
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottom: parent.bottom
                         anchors.bottomMargin: 20
@@ -969,7 +970,7 @@ ApplicationWindow {
                             implicitHeight: 4
                             Rectangle {
                                         id: content
-                                        height: parent.height - 4
+                                        height: parent.height
                                         width: process_progressBar.width * (process_progressBar.value/process_progressBar.to)
                                         color: 'dodgerblue'
                             }
@@ -1356,7 +1357,7 @@ ApplicationWindow {
                         SpinBox{
                             id: speed_tune_button
 
-                            Layout.preferredWidth: 100
+                            Layout.preferredWidth: 140
                             Layout.preferredHeight: 25
                             Layout.alignment: Qt.AlignRight
                             to: 200
@@ -1364,7 +1365,16 @@ ApplicationWindow {
                             value: 100
                             textFromValue: function(value){return value.toString()+'%'}
                             onValueModified: {console.log("valor cambiado a " + value)}//; manager.tune_speed(value)}
-                        }
+
+                            Text{
+                                id: spinbox_title
+
+                                text: qsTr('Control de\n velocidad')
+                                anchors.verticalCenter: speed_tune_button.verticalCenter
+                                anchors.right: speed_tune_button.left
+                                anchors.rightMargin: 20
+                            }
+                        }                        
 
                         ParamArea{id: kff_a; name: "Kff aceleración"; placeholder: qsTr("ingrese un valor"); help: "Ganancia de pre-alimentación de acceleración"; helpSide: "left";
                                   Layout.alignment: Qt.AlignRight; input.onAccepted: {manager.tune_gain("SV_accelFFgain", "sw_accelFFGain", kff_a.paramText)}}

@@ -86,8 +86,9 @@ class PluginUDEC(QObject, Extension):
         ax.set_xlim(-225,225)
         ax.set_ylim(-225,225)
         ax.set_zlim(0,505)
-        ax.set_title("Figura", fontsize=30)
+        ax.set_title("Figura en proceso", fontsize=30)
         ax.view_init(elev=20., azim=-35, roll=0)
+        figure.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
 
         ax.plot(np.array(values[0]),np.array(values[1]),np.array(values[2]))
 
