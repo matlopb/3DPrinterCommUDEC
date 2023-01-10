@@ -325,9 +325,9 @@ class PluginUDEC(QObject, Extension):
         self.plot('plot_one',[],0)
         self.plot('plot_two',[],0)
         self.figure_plot('figure', [[],[],[]])
-        self.create_view("Connect.qml")
+        self.create_view("MainWindow.qml")
         if self.connect_view is None:
-            Logger.log("e", "Not creating Connect window since the QML component failed to be created.")
+            Logger.log("e", "Not creating MainWindow window since the QML component failed to be created.")
             return
         self.connect_view.show()
 
@@ -955,14 +955,14 @@ class PluginUDEC(QObject, Extension):
                 return
             Logger.log("d", "Message view created.")
 
-        if view == "Connect.qml":
+        if view == "MainWindow.qml":
             CuraApplication.getInstance()._qml_engine.addImageProvider('perflog', self.imageProvider)
             self.connect_view = CuraApplication.getInstance().createQmlComponent(path, {"manager": self})
             if self.connect_view is None:
                 Logger.log("e",
-                           "Not creating Connect window since the message view variable is empty.")
+                           "Not creating MainWindow window since the message view variable is empty.")
                 return
-            Logger.log("d", "Connect view created.")            
+            Logger.log("d", "MainWindow view created.")
 
     def show_popup(self) -> None:
         """Show the GUI of the UDEC Plugin."""

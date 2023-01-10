@@ -1,3 +1,3 @@
 {
-    "files": ["ProgressBar.qml","main.qml","ParamArea.qml","MessageDialog.qml","ArrowButtons.qml","plugin.json","Tagbox.qml","PluginUDEC.py","Connect.qml","MatplotlibImageProvider.py"]
+    "files": ["main.qml","ArrowButtons.qml","PluginUDEC.py","Tagbox.qml","ParamArea.qml","plugin.json","ProgressBar.qml","MainWindow.qml","MessageDialog.qml","MatplotlibImageProvider.py"]
 }
