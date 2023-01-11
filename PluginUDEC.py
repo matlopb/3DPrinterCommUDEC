@@ -118,12 +118,14 @@ class PluginUDEC(QObject, Extension):
         ax.tick_params(axis='both', which='both', labelsize=15)
 
         for tag in range(len(value_arrays)):
-            if counter[tag] < 59:
-                X = np.array([self.bias_time(datetime.now(), 0, 0, -counter[tag] + i) for i in range(1+counter[tag])])
+            if len(value_arrays[tag]) < 60:
+                #X = np.array([self.bias_time(datetime.now(), 0, 0, -counter[tag] + i) for i in range(1+counter[tag])])
+                X = np.array([self.bias_time(datetime.now(), 0, 0, -len(value_arrays[tag]) + i) for i in range(len(value_arrays[tag]))])
             else:
                 X = np.array([self.bias_time(datetime.now(), 0, 0, -60 + i) for i in range(60)])
             Y = np.array(value_arrays[tag])
-            ax.plot(X,Y, linewidth=3)    
+            ax.plot(X,Y, linewidth=3, label='tag'+str(tag))
+        ax.legend(fontsize='xx-large', loc='upper left')
 
     def update_plots(self, values_list, tag_counters, tag_spot, upper_len, lower_len):
         # Grab values and put them in independant arrays. Separate arrays between upper and lower plot. Call self.plot to create the figure assossiated with the values.
@@ -147,7 +149,7 @@ class PluginUDEC(QObject, Extension):
 
         _values = []
         for i in range(len(values)):
-            self.plot_value_arrays[tag_spot[i]].append(values[i])#values[tag_spot[i]])
+            self.plot_value_arrays[tag_spot[i]].append(values[i])
             if len(self.plot_value_arrays[tag_spot[i]]) > 60:
                 self.plot_value_arrays[tag_spot[i]].pop(0)
             _values.append(self.plot_value_arrays[tag_spot[i]])
