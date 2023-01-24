@@ -145,7 +145,7 @@ ApplicationWindow {
         }
         onClicked:{
             manager.send_instructions()
-            //manager.check_servos()
+            manager.check_servos()
         }
     }
 
@@ -203,7 +203,6 @@ ApplicationWindow {
                 color: (emergency_stop.hovered && enabled) ? "white" : "black"
         }
         background: Rectangle {
-                //opacity: enabled ? 1 : 0.7
                 border.color: "darkgrey"
                 color: (emergency_stop.hovered && enabled) ? Qt.lighter("red", 1.2) : 'whitesmoke'
                 border.width: 1
@@ -263,7 +262,6 @@ ApplicationWindow {
                 anchors.bottomMargin: 20
                 anchors.horizontalCenter: buttons_row.horizontalCenter
                 color: 'black'
-                //text: qsTr("¿Está seguro que desea detener la impresión? \n Se perderá todo el progreso hasta ahora")
             }
 
             RowLayout{
@@ -525,7 +523,7 @@ ApplicationWindow {
                                 control_tab.enabled = true
                                 monitoring_zone.load_tags()
                                 control_zone.get_actual_position()
-                                //control_zone.get_gains()
+                                control_zone.get_gains()
                             }
                         }
                     }
@@ -548,7 +546,6 @@ ApplicationWindow {
                     anchors.topMargin: 20;
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.horizontalCenterOffset: parent.width/4
-                    //anchors.rightMargin: 100;
                 }
 
                 ColumnLayout
@@ -1002,29 +999,30 @@ ApplicationWindow {
                     running: false
                     repeat: true
                     onTriggered: {
-
-                        var upper_tagboxes_info = {"tagbox_1" : [tagbox1_active, tagbox_1.combobox.currentText, 0, tb_counter[0]], "tagbox_2" : [tagbox2_active, tagbox_2.combobox.currentText, 1, tb_counter[1]], "tagbox_3" : [tagbox3_active, tagbox_3.combobox.currentText, 2, tb_counter[2]], "tagbox_4" : [tagbox4_active, tagbox_4.combobox.currentText, 3, tb_counter[3]]}
-                        var lower_tagboxes_info = {"tagbox2_1" : [tagbox1_active, tagbox2_1.combobox.currentText, 4, tb_counter[4]], "tagbox2_2" : [tagbox2_active, tagbox2_2.combobox.currentText, 5, tb_counter[5]], "tagbox2_3" : [tagbox3_active, tagbox2_3.combobox.currentText, 6, tb_counter[6]], "tagbox2_4" : [tagbox4_active, tagbox2_4.combobox.currentText, 7, tb_counter[7]]}
+                        var upper_tagboxes_info = {"tagbox_1" : [tagbox1_active, tagbox_1.combobox.currentText, 0],
+                            "tagbox_2" : [tagbox2_active, tagbox_2.combobox.currentText, 1],
+                            "tagbox_3" : [tagbox3_active, tagbox_3.combobox.currentText, 2],
+                            "tagbox_4" : [tagbox4_active, tagbox_4.combobox.currentText, 3]}
+                        var lower_tagboxes_info = {"tagbox2_1" : [tagbox1_active, tagbox2_1.combobox.currentText, 4],
+                            "tagbox2_2" : [tagbox2_active, tagbox2_2.combobox.currentText, 5],
+                            "tagbox2_3" : [tagbox3_active, tagbox2_3.combobox.currentText, 6],
+                            "tagbox2_4" : [tagbox4_active, tagbox2_4.combobox.currentText, 7]}
                         var upper_active_tagboxes = who_active(upper_tagboxes_info)
                         var lower_active_tagboxes = who_active(lower_tagboxes_info)
-                        update_charts(upper_active_tagboxes, lower_active_tagboxes)
 
-                        reload1()
-                        reload2()
+                        update_charts(upper_active_tagboxes, lower_active_tagboxes)
+                        reload_upper_plot()
+                        reload_lower_plot()
                     }
 
-                    function reload1() { var t = chart.source; chart.source = ""; chart.source = t; }
-                    function reload2() { var t = chart2.source; chart2.source = ""; chart2.source = t; }
+                    function reload_upper_plot() { var t = chart.source; chart.source = ""; chart.source = t; }
+                    function reload_lower_plot() { var t = chart2.source; chart2.source = ""; chart2.source = t; }
 
                     function who_active(tagbox_dict){
                         var active_elements = {}
                         for (let tag in tagbox_dict){
                             if (tagbox_dict[tag][0] && tagbox_dict[tag][1] != "Seleccione un tag..."){
-                                tb_counter[tagbox_dict[tag][2]]++
                                 active_elements[tag] = [tagbox_dict[tag][1], tagbox_dict[tag][2], tagbox_dict[tag][3]]
-                            }
-                            else{
-                                tb_counter[tagbox_dict[tag][2]] = 0
                             }
                         }
                         return active_elements
@@ -1032,25 +1030,22 @@ ApplicationWindow {
 
                     function update_charts(upper_tag_dict, lower_tag_dict){
                         var tag_names = []
-                        var tag_counter = []
                         var tag_spot = []
                         var upper_len = 0
                         var lower_len = 0
                         for (let upper_tag in upper_tag_dict){
                             tag_names.push(upper_tag_dict[upper_tag][0])
-                            tag_counter.push(upper_tag_dict[upper_tag][2])
                             tag_spot.push(upper_tag_dict[upper_tag][1])
                             upper_len++
                         }
                         for (let lower_tag in lower_tag_dict){
                             tag_names.push(lower_tag_dict[lower_tag][0])
-                            tag_counter.push(lower_tag_dict[lower_tag][2])
                             tag_spot.push(lower_tag_dict[lower_tag][1])
                             lower_len++
                         }
 
                         if (tag_names.length != 0){
-                            var tagbox_values = manager.update_series(tag_names, tag_counter, tag_spot, upper_len, lower_len)
+                            var tagbox_values = manager.update_series(tag_names, tag_spot, upper_len, lower_len)
                             var counter = 0
                             for (let u_element in upper_tag_dict){
                                 fill_text(tagbox_values[counter], upper_tag_dict[u_element][1], "up")
@@ -1094,10 +1089,9 @@ ApplicationWindow {
                 border.width: 1
 
                 function get_actual_position(){
-                    //var actual_position = manager.get_actual_position()
-                    eje_x.paramText = 0//actual_position[0]
-                    eje_y.paramText = 0//actual_position[1]
-                    eje_z.paramText = 0//actual_position[2]
+                    eje_x.paramText = 0
+                    eje_y.paramText = 0
+                    eje_z.paramText = 0
                 }
 
                 function get_gains(){
@@ -1231,12 +1225,12 @@ ApplicationWindow {
                     anchors.horizontalCenter: max_speed.horizontalCenter
                     anchors.bottom: max_speed.top
                     anchors.bottomMargin: 10
-                    ParamArea{id: eje_x; name: "Eje X"; help: " Indique un valor entre -" + ws_radio + " y " + ws_radio; helpSide: "above"; input.width: 100; input.onTextChanged:  {if (parseInt(eje_x.paramText) > parseInt(ws_radio)){eje_x.paramText = parseInt(ws_radio)} if (parseInt(eje_x.paramText) < -parseInt(ws_radio)){eje_x.paramText = -parseInt(ws_radio)}}}
-                    ParamArea{id: eje_y; name: "Eje Y"; help: " Indique un valor entre -" + ws_radio + " y " + ws_radio; helpSide: "above"; input.width: 100; input.onTextChanged:  {if (parseInt(eje_y.paramText) > parseInt(ws_radio)){eje_y.paramText = parseInt(ws_radio)} if (parseInt(eje_y.paramText) < -parseInt(ws_radio)){eje_y.paramText = -parseInt(ws_radio)}}}
-                    ParamArea{id: eje_z; name: "Eje Z"; help: " Indique un valor entre 0 y " + ws_altura; helpSide: "above"; input.width: 100; input.onTextChanged:  {if (parseInt(eje_z.paramText) > parseInt(ws_altura)){eje_z.paramText = parseInt(ws_altura)} if (parseInt(eje_z.paramText) < 0){eje_z.paramText = 0}}}
+                    ParamArea{id: eje_x; name: "Eje X"; paramText: "0"; help: " Indique un valor entre -" + ws_radio + " y " + ws_radio; helpSide: "above"; input.width: 100; input.onTextChanged:  {if (parseInt(eje_x.paramText) > parseInt(ws_radio)){eje_x.paramText = parseInt(ws_radio)} if (parseInt(eje_x.paramText) < -parseInt(ws_radio)){eje_x.paramText = -parseInt(ws_radio)}}}
+                    ParamArea{id: eje_y; name: "Eje Y"; paramText: "0"; help: " Indique un valor entre -" + ws_radio + " y " + ws_radio; helpSide: "above"; input.width: 100; input.onTextChanged:  {if (parseInt(eje_y.paramText) > parseInt(ws_radio)){eje_y.paramText = parseInt(ws_radio)} if (parseInt(eje_y.paramText) < -parseInt(ws_radio)){eje_y.paramText = -parseInt(ws_radio)}}}
+                    ParamArea{id: eje_z; name: "Eje Z"; paramText: "0"; help: " Indique un valor entre 0 y " + ws_altura; helpSide: "above"; input.width: 100; input.onTextChanged:  {if (parseInt(eje_z.paramText) > parseInt(ws_altura)){eje_z.paramText = parseInt(ws_altura)} if (parseInt(eje_z.paramText) < 0){eje_z.paramText = 0}}}
                 }
 
-                ParamArea{id: max_speed; name: "Veloc. de efector"; placeholder: qsTr("Dimension en m/s"); anchors.horizontalCenter: make_move.horizontalCenter; anchors.bottom: make_move.top; anchors.bottomMargin: 10; input.onAccepted: {manager.write_value("jerk_speed", max_speed.paramText)}}
+                ParamArea{id: max_speed; name: "Veloc. de efector"; paramText: "100"; placeholder: qsTr("Dimension en m/s"); anchors.horizontalCenter: make_move.horizontalCenter; anchors.bottom: make_move.top; anchors.bottomMargin: 10}
 
                 Button{
                     id: make_move
@@ -1265,6 +1259,7 @@ ApplicationWindow {
                         width: 32
                     }
                     onClicked: {
+                        manager.write_value("jerk_speed", max_speed.paramText)
                         manager.move_to(eje_x.paramText, eje_y.paramText, -eje_z.paramText)
                     }
                 }
@@ -1364,7 +1359,7 @@ ApplicationWindow {
                             from: 1
                             value: 100
                             textFromValue: function(value){return value.toString()+'%'}
-                            onValueModified: {console.log("valor cambiado a " + value)}//; manager.tune_speed(value)}
+                            onValueModified: {console.log("valor cambiado a " + value); manager.tune_speed(value)}
 
                             Text{
                                 id: spinbox_title

@@ -99,13 +99,13 @@ class PluginUDEC(QObject, Extension):
             self.plc.open()
         x_value = self.plc.read('Program:MainProgram.X').value
         y_value = self.plc.read('Program:MainProgram.Y').value
-        z_value = self.plc.read('Program:MainProgram.Z').value + 505
+        z_value = self.plc.read('Program:MainProgram.Z').value
         self.figure_array[0].append(x_value)
         self.figure_array[1].append(y_value)
         self.figure_array[2].append(z_value)
         self.figure_plot('figure',self.figure_array)
 
-    def plot(self, name, value_arrays, counter):
+    def plot(self, name, value_arrays):
         self.imageProvider = matplt.MatplotlibImageProvider()
         gain = 1.4
         figure = self.imageProvider.addFigure(name, figsize=(6.4*gain,4.8*gain))
@@ -119,7 +119,6 @@ class PluginUDEC(QObject, Extension):
 
         for tag in range(len(value_arrays)):
             if len(value_arrays[tag]) < 60:
-                #X = np.array([self.bias_time(datetime.now(), 0, 0, -counter[tag] + i) for i in range(1+counter[tag])])
                 X = np.array([self.bias_time(datetime.now(), 0, 0, -len(value_arrays[tag]) + i) for i in range(len(value_arrays[tag]))])
             else:
                 X = np.array([self.bias_time(datetime.now(), 0, 0, -60 + i) for i in range(60)])
@@ -127,22 +126,18 @@ class PluginUDEC(QObject, Extension):
             ax.plot(X,Y, linewidth=3, label='tag'+str(tag))
         ax.legend(fontsize='xx-large', loc='upper left')
 
-    def update_plots(self, values_list, tag_counters, tag_spot, upper_len, lower_len):
+    def update_plots(self, values_list, tag_spot, upper_len, lower_len):
         # Grab values and put them in independant arrays. Separate arrays between upper and lower plot. Call self.plot to create the figure assossiated with the values.
 
         values = self.get_value_arrays(values_list, tag_spot)
         upper_value_arrays = []
         lower_value_arrays = []
-        upper_counter = []
-        lower_counter = []
         for i in range(upper_len):
             upper_value_arrays.append(values[i])
-            upper_counter.append(tag_counters[i])
         for i in range(lower_len):
             lower_value_arrays.append(values[i + upper_len])
-            lower_counter.append(tag_counters[i + upper_len])
-        self.plot('plot_one', upper_value_arrays, upper_counter)
-        self.plot('plot_two', lower_value_arrays, lower_counter)
+        self.plot('plot_one', upper_value_arrays)
+        self.plot('plot_two', lower_value_arrays)
         return
 
     def get_value_arrays(self, values, tag_spot):
@@ -158,10 +153,10 @@ class PluginUDEC(QObject, Extension):
                 element.clear()
         return _values
 
-    @pyqtSlot(list, list, list,  int, int, result=list)
-    def update_series(self, tag_list, tag_counters, tag_spot, upper_len, lower_len) -> List[float]:
-        """Reads the values of the tags in tag_list from the device associated with
-        the given IP address"""
+    @pyqtSlot(list, list,  int, int, result=list)
+    def update_series(self, tag_list, tag_spot, upper_len, lower_len) -> List[float]:
+        """Updates both 2D plots with the values of the given tag list. Returns the
+        read values to be displayed to the user"""
 
         try:
             tag_names = self.extract_names(tag_list)
@@ -182,7 +177,7 @@ class PluginUDEC(QObject, Extension):
                 self.progress_end.emit()
             self.loading_is_open = True            
             values = self.saved_values
-        self.update_plots(values, tag_counters, tag_spot, upper_len, lower_len)
+        self.update_plots(values, tag_spot, upper_len, lower_len)
         return values
 
     def bias_time(self, original_time, hr_bias, min_bias, sec_bias):
@@ -324,8 +319,8 @@ class PluginUDEC(QObject, Extension):
 
     def show_connect(self):
         """Displays an error message with the given title and message"""
-        self.plot('plot_one',[],0)
-        self.plot('plot_two',[],0)
+        self.plot('plot_one',[])
+        self.plot('plot_two',[])
         self.figure_plot('figure', [[],[],[]])
         self.create_view("MainWindow.qml")
         if self.connect_view is None:
@@ -333,22 +328,17 @@ class PluginUDEC(QObject, Extension):
             return
         self.connect_view.show()
 
-    @pyqtSlot(str, result=list)
-    def plc_info(self, ip) -> List[str]:
+    @pyqtSlot(result=list)
+    def plc_info(self) -> List[str]:
         try:
-            print(self.plc.connected)
             if not self.plc.connected:
                 self.plc.open()
             is_connected = self.plc.connected
-            print(is_connected)
             product_name = self.plc.info["product_name"]
-            print(product_name)
             name = self.plc.info["name"]
-            print(name)
             programs = ""
             for program in list(self.plc.info["programs"].keys()):
                 programs += str(program)
-            print(program)
             return [product_name, name, programs, is_connected]
         except:
             self.set_message_params('e', 'Se produjo un error',
@@ -364,7 +354,6 @@ class PluginUDEC(QObject, Extension):
         if not self.plc.connected:
             self.plc.open()
         is_printing = self.plc.read('Program:MainProgram.sw_beginapp').value
-        print('Program:MainProgram.Matriz_L{'+str(n_instructions)+'}')
         if self.plc.connected and not is_printing:
             self.plc.write('Program:MainProgram.Matriz_L{'+str(n_instructions)+'}',   # ARREGLAR LA SOBRESCRITURA DEL LARGO DE INSTRUCCIONES AL EJECUTAR MOVIMIENTO ANTES DE ENVIAR INSTRUCCIONES
                       self.positions_list)
@@ -391,11 +380,8 @@ class PluginUDEC(QObject, Extension):
             self.progress_end.emit()
             return
         coordinates = self.get_coordinates(self.split_lines(self.get_gcode()))
-        print('PROCESS IS DONE')
         self.total_coordinates = len(coordinates)
-        print('PROCESS IS DONE')
         if self.fits_in_ws(ws_radio, ws_height, coordinates):
-            print('PROCESS IS DONE')
             ws_coordinates = self.z_bias(coordinates, float(height), float(ws_height))
             try:
                 self.inv_kin_problem(ws_coordinates, params)
@@ -458,7 +444,6 @@ class PluginUDEC(QObject, Extension):
         tag_valid_name = self.extract_tag_name(tag_name)
         if not self.plc.connected:
             self.plc.open()
-        #with LogixDriver(self.ip) as plc:
         self.plc.write(tag_valid_name, new_value)
 
     @pyqtSlot(str, str, float)
@@ -519,24 +504,16 @@ class PluginUDEC(QObject, Extension):
     def get_n_coor(self):
         return str(self.total_coordinates)
 
-    @pyqtSlot(result=list)
-    def get_actual_position(self):
-        tags = ['Actuador_B1.ActualPosition', 'Actuador_B2.ActualPosition', 'Actuador_B3.ActualPosition']
-        with LogixDriver(self.ip, init__program_tags=False) as plc:
-            position_info = plc.read(*tags)
-        positions = self.extract_values(position_info, 3)
-        positions = [round(value) for value in positions]
-        return positions
-
     @pyqtSlot(float, float, float)
     def move_to(self, x_pos, y_pos, z_pos):
-        print(x_pos, y_pos, z_pos)
-        servo_pos = self.inv_kin_problem([[x_pos, y_pos, z_pos - self.params[3] + self.params[5], 6000]], self.params)
-        print(servo_pos)
+        x = x_pos
+        y = y_pos
+        z = z_pos - self.params[3] + self.params[5]
+        servo_pos = self.inv_kin_problem([[x, y, z, 6000]], self.params)
         is_printing = self.plc.read('Program:MainProgram.sw_beginapp').value
         is_homing = self.plc.read('sw_startposition').value
         if self.plc.connected and not is_printing and not is_homing:
-            self.plc.write('Program:MainProgram.coor_move_array{3}', self.flatten(servo_pos)) # coor_move_array{3}
+            self.plc.write('Program:MainProgram.coor_move_array{3}', self.flatten(servo_pos))
             self.plc.write('Program:MainProgram.sw_coor_move', 1)
         else:
             self.set_message_params('e', 'Operacion cancelada',
