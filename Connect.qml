@@ -879,13 +879,22 @@ ApplicationWindow {
                     border.width: 1
 
                     Image {
-                        id: figure_plot
+                        id: figure_3d_plot
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
                         anchors.right: parent.right
                         anchors.left: parent.left
                         anchors.margins: 3
                         source: "image://perflog/figure"
+                    }
+                    Image {
+                        id: figure_xy_plot
+
+                        anchors.top: figure_3d_plot.top
+                        anchors.right: figure_3d_plot.right
+                        width: figure_3d_plot.width*0.23
+                        height: figure_3d_plot.height*0.23
+                        source: "image://perflog/xy_figure"
                     }
                     Timer{
                         id: figure_timer
@@ -896,7 +905,16 @@ ApplicationWindow {
                             manager.get_figure_progress()
                             reload3()
                         }
-                        function reload3() { var t = figure_plot.source; figure_plot.source = ""; figure_plot.source = t; }
+                        function reload3() {
+                            var tmp = figure_3d_plot.source;
+                            var tmp_xy = figure_xy_plot.source;
+
+                            figure_3d_plot.source = "";
+                            figure_xy_plot.source = "";
+
+                            figure_3d_plot.source = tmp;
+                            figure_xy_plot.source = tmp_xy;
+                        }
                     }
                 }
 

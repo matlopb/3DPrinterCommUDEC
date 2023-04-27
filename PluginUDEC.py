@@ -87,10 +87,29 @@ class PluginUDEC(QObject, Extension):
         ax.set_ylim(-225,225)
         ax.set_zlim(0,505)
         ax.set_title("Figura en proceso", fontsize=30)
-        ax.view_init(elev=20., azim=-35, roll=0)
+        ax.view_init(elev=35, azim=45, roll=0)
         figure.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
 
         ax.plot(np.array(values[0]),np.array(values[1]),np.array(values[2]))
+
+    def figure_xy_plot(self, name, values):
+        """Recieves a list of 2 arrays (x,y) to plot on 2 dimensions. Stores the image with the given name."""
+
+        gain = 1.4
+        figure = self.imageProvider.addFigure(name, figsize=(6.4*gain,4.8*gain))
+        ax = figure.add_subplot()
+        ax.grid(linewidth=8)
+        ax.set_xlim(-225,225)
+        ax.set_ylim(-225,225)
+        ax.set_xlabel('X', fontsize=50, weight='bold')
+        ax.set_ylabel('Y', fontsize=50, weight='bold', rotation=0)
+        ax.set(xticks=np.arange(-225,226, 225),yticks=np.arange(-225,226, 225), aspect='auto')
+        ax.tick_params(axis='both', labelsize=50)
+        ax.set_yticklabels(ax.get_yticks(), weight='bold')
+        ax.set_xticklabels(ax.get_xticks(), weight='bold')
+        figure.tight_layout()
+
+        ax.plot(np.array(values[0]),np.array(values[1]), linewidth=5 )
 
     @pyqtSlot()
     def get_figure_progress(self):
@@ -104,6 +123,7 @@ class PluginUDEC(QObject, Extension):
         self.figure_array[1].append(y_value)
         self.figure_array[2].append(z_value)
         self.figure_plot('figure',self.figure_array)
+        self.figure_xy_plot("xy_figure",self.figure_array[0:2])
 
     def plot(self, name, value_arrays, counter):
         self.imageProvider = matplt.MatplotlibImageProvider()
@@ -321,10 +341,11 @@ class PluginUDEC(QObject, Extension):
             self.new_value = plc.read('Program:MainProgram.array_tag{3}').value[0]
 
     def show_connect(self):
-        """Displays an error message with the given title and message"""
+
         self.plot('plot_one',[],0)
         self.plot('plot_two',[],0)
         self.figure_plot('figure', [[],[],[]])
+        self.figure_xy_plot("xy_figure", [[],[]])
         self.create_view("Connect.qml")
         if self.connect_view is None:
             Logger.log("e", "Not creating Connect window since the QML component failed to be created.")
