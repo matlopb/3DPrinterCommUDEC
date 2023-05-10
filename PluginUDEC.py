@@ -338,20 +338,12 @@ class PluginUDEC(QObject, Extension):
             self.new_value = plc.read('Program:MainProgram.array_tag{3}').value[0]
 
     def show_connect(self):
-<<<<<<< HEAD
-
-        self.plot('plot_one',[],0)
-        self.plot('plot_two',[],0)
-        self.figure_plot('figure', [[],[],[]])
-        self.figure_xy_plot("xy_figure", [[],[]])
-        self.create_view("Connect.qml")
-=======
         """Displays an error message with the given title and message"""
         self.plot('plot_one',[])
         self.plot('plot_two',[])
         self.figure_plot('figure', [[],[],[]])
+        self.figure_xy_plot("xy_figure", [[],[]])
         self.create_view("MainWindow.qml")
->>>>>>> 2a2b88f64767c90c6ba08ff07575ac4191ace52f
         if self.connect_view is None:
             Logger.log("e", "Not creating MainWindow window since the QML component failed to be created.")
             return
